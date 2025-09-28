@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           number: i + 1,
           name: wine.name,
           year: wine.year,
-          characteristics,
+          characteristics: characteristics as any,
         },
       })
     }
