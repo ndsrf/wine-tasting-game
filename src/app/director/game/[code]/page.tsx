@@ -59,7 +59,15 @@ export default function DirectorGamePage() {
           if (data.error) {
             setError(data.error)
           } else {
-            setGameState(data.game)
+            // Create proper GameState structure
+            setGameState({
+              game: data.game,
+              currentWine: 1,
+              currentPhase: 'VISUAL',
+              players: data.game.players || [],
+              isGameStarted: data.game.status === 'IN_PROGRESS',
+              isGameFinished: data.game.status === 'FINISHED'
+            })
           }
         })
         .catch(() => setError('Failed to load game'))
@@ -167,10 +175,10 @@ export default function DirectorGamePage() {
           <Card>
             <h2 className="text-xl font-semibold mb-4">Game Status</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">Status:</span> {gameState.game.status}</p>
-              <p><span className="font-medium">Difficulty:</span> {gameState.game.difficulty}</p>
-              <p><span className="font-medium">Total Wines:</span> {gameState.game.wineCount}</p>
-              {gameState.isGameStarted && (
+              <p><span className="font-medium">Status:</span> {gameState?.game?.status || 'Unknown'}</p>
+              <p><span className="font-medium">Difficulty:</span> {gameState?.game?.difficulty || 'Unknown'}</p>
+              <p><span className="font-medium">Total Wines:</span> {gameState?.game?.wineCount || 0}</p>
+              {gameState?.isGameStarted && (
                 <>
                   <p><span className="font-medium">Current Wine:</span> {gameState.currentWine}</p>
                   <p><span className="font-medium">Current Phase:</span> {gameState.currentPhase}</p>
@@ -180,7 +188,7 @@ export default function DirectorGamePage() {
           </Card>
         </div>
 
-        {!gameState.isGameStarted && (
+        {!gameState?.isGameStarted && (
           <Card className="text-center">
             <h2 className="text-xl font-semibold mb-4">Ready to Start?</h2>
             <p className="text-gray-600 mb-6">
@@ -189,7 +197,7 @@ export default function DirectorGamePage() {
             <Button
               onClick={handleStartGame}
               className="inline-flex items-center"
-              disabled={gameState.players.length === 0}
+              disabled={!gameState?.players || gameState.players.length === 0}
             >
               <Play className="h-4 w-4 mr-2" />
               Start Game
@@ -197,7 +205,7 @@ export default function DirectorGamePage() {
           </Card>
         )}
 
-        {gameState.isGameStarted && !gameState.isGameFinished && (
+        {gameState?.isGameStarted && !gameState?.isGameFinished && (
           <Card>
             <h2 className="text-xl font-semibold mb-4">Game Controls</h2>
             <div className="space-y-4">
@@ -208,7 +216,7 @@ export default function DirectorGamePage() {
                     <Button
                       key={phase}
                       onClick={() => handleChangePhase(phase)}
-                      variant={gameState.currentPhase === phase ? 'primary' : 'outline'}
+                      variant={gameState?.currentPhase === phase ? 'primary' : 'outline'}
                       size="sm"
                     >
                       {phase.charAt(0) + phase.slice(1).toLowerCase()}
@@ -221,13 +229,13 @@ export default function DirectorGamePage() {
                 <Button
                   onClick={handleNextWine}
                   className="inline-flex items-center"
-                  disabled={gameState.currentWine >= gameState.game.wineCount}
+                  disabled={!gameState?.game?.wineCount || gameState.currentWine >= gameState.game.wineCount}
                 >
                   <ArrowRight className="h-4 w-4 mr-2" />
                   Next Wine
                 </Button>
 
-                {gameState.currentWine >= gameState.game.wineCount && (
+                {gameState?.game?.wineCount && gameState.currentWine >= gameState.game.wineCount && (
                   <Button
                     onClick={handleFinishGame}
                     variant="secondary"
@@ -242,7 +250,7 @@ export default function DirectorGamePage() {
           </Card>
         )}
 
-        {gameState.isGameFinished && (
+        {gameState?.isGameFinished && (
           <Card className="text-center">
             <h2 className="text-xl font-semibold mb-4">Game Completed!</h2>
             <p className="text-gray-600 mb-6">
