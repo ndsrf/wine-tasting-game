@@ -6,7 +6,7 @@ const nextConfig = {
   i18n: {
     locales: ['en', 'es', 'fr', 'de'],
     defaultLocale: 'en',
-    localeDetection: true
+    localeDetection: false
   },
   images: {
     domains: [],

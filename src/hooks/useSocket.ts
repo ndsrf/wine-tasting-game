@@ -7,6 +7,8 @@ import { GameState, Player } from '@/types'
 interface UseSocketOptions {
   onGameState?: (state: GameState) => void
   onPlayerJoined?: (player: Player) => void
+  onJoinedAsPlayer?: (data: { player: Player; game?: any }) => void
+  onJoinedAsDirector?: (data: { message: string }) => void
   onGameStarted?: (state: GameState) => void
   onPhaseChanged?: (phase: string) => void
   onWineChanged?: (state: GameState) => void
@@ -32,6 +34,8 @@ export function useSocket(options: UseSocketOptions = {}) {
 
     socket.on('game-state', options.onGameState || (() => {}))
     socket.on('player-joined', options.onPlayerJoined || (() => {}))
+    socket.on('joined-as-player', options.onJoinedAsPlayer || (() => {}))
+    socket.on('joined-as-director', options.onJoinedAsDirector || (() => {}))
     socket.on('game-started', options.onGameStarted || (() => {}))
     socket.on('phase-changed', options.onPhaseChanged || (() => {}))
     socket.on('wine-changed', options.onWineChanged || (() => {}))

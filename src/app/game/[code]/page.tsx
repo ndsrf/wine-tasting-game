@@ -28,6 +28,10 @@ export default function GamePage() {
         })
       }
     },
+    onJoinedAsPlayer: (data) => {
+      console.log('Joined as player:', data)
+      setPlayer(data.player)
+    },
     onError: (err) => setError(err.message),
     onGameStarted: (state) => setGameState(state),
     onPhaseChanged: (phase) => {
@@ -73,7 +77,15 @@ export default function GamePage() {
         .then(res => res.json())
         .then(data => {
           if (!data.error) {
-            setGameState(data.game)
+            // Create proper GameState structure
+            setGameState({
+              game: data.game,
+              currentWine: 1,
+              currentPhase: 'VISUAL',
+              players: data.game.players || [],
+              isGameStarted: data.game.status === 'IN_PROGRESS',
+              isGameFinished: data.game.status === 'FINISHED'
+            })
           }
         })
         .catch(() => {})
@@ -110,13 +122,13 @@ export default function GamePage() {
                 </div>
               )}
 
-              {gameState && (
+              {gameState && gameState.game && (
                 <div className="bg-wine-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-wine-700 mb-2">Game Info</h3>
-                  <p className="text-sm text-wine-600">Difficulty: {gameState.game.difficulty}</p>
-                  <p className="text-sm text-wine-600">Wines: {gameState.game.wineCount}</p>
-                  <p className="text-sm text-wine-600">Status: {gameState.game.status}</p>
-                  {gameState.players.length > 0 && (
+                  <p className="text-sm text-wine-600">Difficulty: {gameState.game.difficulty || 'Unknown'}</p>
+                  <p className="text-sm text-wine-600">Wines: {gameState.game.wineCount || 0}</p>
+                  <p className="text-sm text-wine-600">Status: {gameState.game.status || 'Unknown'}</p>
+                  {gameState.players && gameState.players.length > 0 && (
                     <p className="text-sm text-wine-600">Players joined: {gameState.players.length}</p>
                   )}
                 </div>

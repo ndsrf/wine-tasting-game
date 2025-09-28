@@ -7,13 +7,17 @@ import { GameState, CharacteristicType } from '@/types'
 export class GameSocket {
   private io: SocketIOServer
 
-  constructor(server: HTTPServer) {
-    this.io = new SocketIOServer(server, {
-      cors: {
-        origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
-        methods: ['GET', 'POST'],
-      },
-    })
+  constructor(server: HTTPServer, io?: SocketIOServer) {
+    if (io) {
+      this.io = io
+    } else {
+      this.io = new SocketIOServer(server, {
+        cors: {
+          origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
+          methods: ['GET', 'POST'],
+        },
+      })
+    }
 
     this.setupEventHandlers()
   }
