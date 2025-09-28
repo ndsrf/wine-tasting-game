@@ -16,7 +16,7 @@ export default function DirectorGamePage() {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [error, setError] = useState('')
 
-  const { isConnected, startGame, changePhase, nextWine } = useSocket({
+  const { isConnected, joinGame, startGame, changePhase, nextWine } = useSocket({
     onGameState: (state) => setGameState(state),
     onPlayerJoined: (newPlayer) => {
       if (gameState) {
@@ -25,6 +25,9 @@ export default function DirectorGamePage() {
           players: [...gameState.players, newPlayer]
         })
       }
+    },
+    onJoinedAsDirector: (data) => {
+      console.log('Director joined:', data)
     },
     onError: (err) => setError(err.message),
     onGameStarted: (state) => setGameState(state),
@@ -68,11 +71,14 @@ export default function DirectorGamePage() {
               isGameStarted: data.game.status === 'IN_PROGRESS',
               isGameFinished: data.game.status === 'FINISHED'
             })
+
+            // Join the Socket.io room as director
+            joinGame({ code, userId: user.id })
           }
         })
         .catch(() => setError('Failed to load game'))
     }
-  }, [isConnected, code, user])
+  }, [isConnected, code, user, joinGame])
 
   const handleStartGame = () => {
     if (user && code) {

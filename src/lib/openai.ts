@@ -98,7 +98,7 @@ Return the response in this exact JSON format:
       characteristics: wineData.characteristics,
     }))
 
-    const similarityWarning = checkSimilarity(processedWines.map(w => w.characteristics))
+    const similarityWarning = checkSimilarity(processedWines.map((w: { wine: WineInfo; characteristics: WineCharacteristics }) => w.characteristics))
 
     return {
       wines: processedWines,
