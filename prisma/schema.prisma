@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String?
+  googleId  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  games Game[]
+
+  @@map("users")
+}
+
+model Game {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  directorId String
+  difficulty Difficulty
+  wineCount  Int
+  status     GameStatus @default(CREATED)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  director User     @relation(fields: [directorId], references: [id], onDelete: Cascade)
+  wines    Wine[]
+  players  Player[]
+
+  @@map("games")
+}
+
+model Wine {
+  id             String @id @default(cuid())
+  gameId         String
+  number         Int
+  name           String
+  year           Int
+  characteristics Json
+
+  game    Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@unique([gameId, number])
+  @@map("wines")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  gameId    String
+  nickname  String
+  sessionId String
+  score     Int      @default(0)
+  joinedAt  DateTime @default(now())
+
+  game    Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@unique([gameId, nickname])
+  @@map("players")
+}
+
+model Answer {
+  id               String            @id @default(cuid())
+  playerId         String
+  wineId           String
+  characteristicType CharacteristicType
+  answer           String
+  isCorrect        Boolean
+  createdAt        DateTime          @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  wine   Wine   @relation(fields: [wineId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, wineId, characteristicType])
+  @@map("answers")
+}
+
+enum Difficulty {
+  NOVICE
+  INTERMEDIATE
+  SOMMELIER
+}
+
+enum GameStatus {
+  CREATED
+  IN_PROGRESS
+  FINISHED
+}
+
+enum CharacteristicType {
+  VISUAL
+  SMELL
+  TASTE
+}

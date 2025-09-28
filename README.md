@@ -1,0 +1,248 @@
+# Wine Tasting Game
+
+A multiplayer web application for conducting wine tasting sessions where players guess wine characteristics across visual, smell, and taste categories.
+
+## Features
+
+- **Director-Player Model**: Directors create and manage games, players join with simple codes
+- **Multi-difficulty Levels**: Novice (3), Intermediate (5), Sommelier (10) characteristics per category
+- **Real-time Multiplayer**: WebSocket-based synchronization for live gameplay
+- **AI-Powered Wine Characteristics**: OpenAI integration generates realistic wine profiles
+- **Mobile-First Design**: PWA with offline capabilities and mobile optimization
+- **Multi-language Support**: English, Spanish, French, and German
+- **SEO Optimized**: Server-side rendering with comprehensive meta tags
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **Backend**: Node.js, Express, Socket.io
+- **Database**: PostgreSQL with Prisma ORM
+- **Caching**: Redis for session management and game state
+- **AI**: OpenAI API for wine characteristic generation
+- **Authentication**: JWT + Google OAuth
+- **Deployment**: Optimized for Vercel/Docker deployment
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- Redis server
+- OpenAI API key
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd wine-tasting-game
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env
+# Fill in your database URLs, API keys, and secrets
+```
+
+4. Set up the database:
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+5. Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`.
+
+### Environment Variables
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/wine_tasting_db"
+
+# Authentication
+NEXTAUTH_SECRET="your-nextauth-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+JWT_SECRET="your-jwt-secret-here"
+
+# Google OAuth (optional)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# OpenAI
+OPENAI_API_KEY="your-openai-api-key-here"
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# Environment
+NODE_ENV="development"
+```
+
+## Game Flow
+
+### For Directors
+
+1. **Register/Login**: Create an account to manage games
+2. **Create Game**: Set difficulty, number of wines, and wine details
+3. **Share Code**: Distribute the 5-character game code to players
+4. **Manage Game**: Control game phases and progression
+5. **View Results**: Access final scores and detailed answer analysis
+
+### For Players
+
+1. **Join Game**: Enter game code and nickname (no registration required)
+2. **Wait for Start**: See other players joining in real-time
+3. **Play Rounds**: Guess wine characteristics across three phases per wine:
+   - Visual characteristics
+   - Smell characteristics
+   - Taste characteristics
+4. **See Results**: View final rankings and correct answers
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Director registration
+- `POST /api/auth/login` - Director login
+- `POST /api/auth/google` - Google OAuth authentication
+
+### Games
+- `POST /api/games/create` - Create new game (directors only)
+- `GET /api/games/[code]` - Get game details
+- `GET /api/games/[code]/results` - Get game results (finished games only)
+
+## WebSocket Events
+
+### Client to Server
+- `join-game` - Join a game as player or director
+- `start-game` - Start the game (directors only)
+- `change-phase` - Change current phase (directors only)
+- `next-wine` - Move to next wine (directors only)
+- `submit-answer` - Submit player answers
+
+### Server to Client
+- `game-state` - Current game state
+- `player-joined` - New player joined
+- `game-started` - Game has started
+- `phase-changed` - Phase transition
+- `wine-changed` - Wine transition
+- `answer-submitted` - Answer submission confirmation
+- `error` - Error messages
+
+## Database Schema
+
+### Core Tables
+- **users**: Director accounts and authentication
+- **games**: Game instances with settings and status
+- **wines**: Wine details and AI-generated characteristics
+- **players**: Player information and scores
+- **answers**: Player responses and correctness
+
+### Key Relationships
+- Games belong to directors (users)
+- Wines belong to games
+- Players belong to games
+- Answers link players to wines with characteristic types
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push code to GitHub/GitLab
+2. Connect repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy automatically on push
+
+### Docker
+
+```bash
+# Build image
+docker build -t wine-tasting-game .
+
+# Run with environment variables
+docker run -p 3000:3000 --env-file .env wine-tasting-game
+```
+
+### Manual Deployment
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+## Development
+
+### Scripts
+
+- `npm run dev` - Development server with hot reload
+- `npm run build` - Production build
+- `npm run start` - Production server
+- `npm run lint` - ESLint check
+- `npm run typecheck` - TypeScript type checking
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:push` - Push schema changes to database
+- `npm run db:migrate` - Run database migrations
+- `npm run db:studio` - Open Prisma Studio
+
+### Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+│   ├── api/            # API routes
+│   ├── auth/           # Authentication pages
+│   ├── director/       # Director dashboard and game management
+│   ├── game/           # Player game interface
+│   └── globals.css     # Global styles
+├── components/         # Reusable React components
+│   └── ui/            # Base UI components
+├── hooks/             # Custom React hooks
+├── lib/               # Utility libraries
+│   ├── auth.ts        # Authentication utilities
+│   ├── openai.ts      # OpenAI integration
+│   ├── prisma.ts      # Database client
+│   ├── redis.ts       # Redis client
+│   └── socket.ts      # Socket.io server logic
+└── types/             # TypeScript type definitions
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make changes and add tests
+4. Commit changes: `git commit -am 'Add feature'`
+5. Push to branch: `git push origin feature-name`
+6. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License. See LICENSE file for details.
+
+## Support
+
+For issues and questions:
+- Create an issue on GitHub
+- Check existing documentation
+- Review API endpoints and WebSocket events
+
+## Roadmap
+
+- [ ] Advanced analytics and game statistics
+- [ ] Tournament mode with multiple rounds
+- [ ] Wine recommendation system
+- [ ] Social features and friend systems
+- [ ] Custom wine databases
+- [ ] Enhanced mobile app with native features

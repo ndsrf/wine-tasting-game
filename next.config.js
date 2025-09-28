@@ -1,0 +1,43 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client']
+  },
+  i18n: {
+    locales: ['en', 'es', 'fr', 'de'],
+    defaultLocale: 'en',
+    localeDetection: true
+  },
+  images: {
+    domains: [],
+    unoptimized: false
+  },
+  env: {
+    NEXTAUTH_URL: process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin'
+          }
+        ]
+      }
+    ]
+  }
+}
+
+module.exports = nextConfig
