@@ -141,6 +141,14 @@ export default function HomePage() {
       <footer className="bg-wine-900 text-white py-8 mt-16">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p>&copy; 2024 Wine Tasting Game. Made with ❤️ for wine lovers everywhere.</p>
+          <div className="mt-4">
+            <Link
+              href="/test"
+              className="text-wine-200 hover:text-white text-sm underline"
+            >
+              🧪 Create Test Room (Dev Only)
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

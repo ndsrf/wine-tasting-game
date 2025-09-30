@@ -1,46 +1,27 @@
-import OpenAI from 'openai'
-import { Difficulty, WineCharacteristics } from '@/types'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+import OpenAI from 'openai';
+import { Difficulty, WineCharacteristics } from '@/types';
+import { VISUAL_OPTIONS, SMELL_OPTIONS, TASTE_OPTIONS } from './wine-options';
 
 interface WineInfo {
-  name: string
-  year: number
+  name: string;
+  year: number;
 }
 
 const CHARACTERISTIC_COUNTS = {
   NOVICE: 3,
-  INTERMEDIATE: 5,
-  SOMMELIER: 10,
-}
-
-const VISUAL_OPTIONS = [
-  'Ruby red', 'Garnet', 'Purple', 'Brick red', 'Deep red', 'Light red',
-  'Golden yellow', 'Pale yellow', 'Straw yellow', 'Greenish yellow',
-  'Clear', 'Hazy', 'Brilliant', 'Cloudy', 'Transparent', 'Opaque'
-]
-
-const SMELL_OPTIONS = [
-  'Fruity', 'Floral', 'Spicy', 'Herbal', 'Earthy', 'Woody', 'Vanilla',
-  'Oak', 'Berry', 'Citrus', 'Tropical', 'Stone fruit', 'Red fruit',
-  'Black fruit', 'Mineral', 'Smoky', 'Leather', 'Tobacco', 'Chocolate',
-  'Coffee', 'Caramel', 'Honey', 'Nutty', 'Grassy', 'Vegetal'
-]
-
-const TASTE_OPTIONS = [
-  'Sweet', 'Dry', 'Semi-dry', 'Acidic', 'Tart', 'Smooth', 'Tannic',
-  'Bold', 'Light', 'Medium-bodied', 'Full-bodied', 'Crisp', 'Round',
-  'Balanced', 'Complex', 'Simple', 'Harsh', 'Soft', 'Rich', 'Delicate',
-  'Intense', 'Subtle', 'Long finish', 'Short finish', 'Warming'
-]
+  INTERMEDIATE: 4,
+  SOMMELIER: 5,
+};
 
 export async function generateWineCharacteristics(
   wines: WineInfo[],
   difficulty: Difficulty
 ): Promise<{ wines: Array<{ wine: WineInfo; characteristics: WineCharacteristics }>, similarityWarning?: string }> {
-  const characteristicCount = CHARACTERISTIC_COUNTS[difficulty]
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const characteristicCount = CHARACTERISTIC_COUNTS[difficulty];
 
   try {
     const wineDescriptions = wines.map(wine => `${wine.name} (${wine.year})`).join(', ')
@@ -164,5 +145,3 @@ function checkSimilarity(characteristics: WineCharacteristics[]): string | undef
 
   return undefined
 }
-
-export { VISUAL_OPTIONS, SMELL_OPTIONS, TASTE_OPTIONS }

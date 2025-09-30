@@ -15,5 +15,19 @@ The game must be indexed by Google - make sure it has the right SEO characterist
 
 Provide a description of the system and architecture so I can validate it before the implementation.
 
+
+
+Fix these:
+
+1. The dropdowns should show less options, depending on the difficulty. If difficulty is low show more or less the same number of options as number of wines.
+
+2. When the director changes the phase (from Visual to Smell for example), nothing changes on the player screen. Please fix 
+it so the players change from phase to phase as indicated by the director.
+
+3. The director must also be able to play, please add a matrix to the director panel screen so the director can also guess 
+characteristics.
+
+4. When the players click "Submit Answers" change the colour of the button to green to indicate the answer was submitted.
+
 : <> : <> 3: <>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
+import { setAuthCookies, generateRefreshToken } from '@/lib/auth-server'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -34,15 +35,21 @@ export async function POST(request: NextRequest) {
     }
 
     const token = generateToken(user.id)
+    const refreshToken = generateRefreshToken(user.id)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
       },
-      token,
+      success: true,
     })
+
+    // Set HTTP-only cookies
+    setAuthCookies(response, token, refreshToken)
+
+    return response
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

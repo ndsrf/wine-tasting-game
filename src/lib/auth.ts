@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { NextRequest } from 'next/server'
 import { prisma } from './prisma'
+import { getTokenFromRequest } from './auth-server'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
 
@@ -37,13 +38,35 @@ export async function getUserFromToken(token: string) {
   return user
 }
 
+// Enhanced authentication function that supports both cookies and Bearer tokens
 export async function getAuthenticatedUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Try to get token from cookies first (new method)
+  let token = getTokenFromRequest(request)
+
+  // Fall back to Authorization header (backward compatibility)
+  if (!token) {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7)
+    }
+  }
+
+  if (!token) {
     return null
   }
 
-  const token = authHeader.substring(7)
+  return getUserFromToken(token)
+}
+
+// Helper function for cookie-based authentication (server components)
+export async function getAuthenticatedUserFromCookies() {
+  const { getTokenFromCookies } = await import('./auth-server')
+  const token = getTokenFromCookies()
+
+  if (!token) {
+    return null
+  }
+
   return getUserFromToken(token)
 }
 

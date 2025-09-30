@@ -75,8 +75,22 @@ NEXTAUTH_URL="http://localhost:3000"
 JWT_SECRET="your-jwt-secret-here"
 
 # Google OAuth (optional)
+# To configure Google OAuth, you need to create a project in the Google API Console:
+# https://console.developers.google.com/
+# 1. Create a new project or select an existing one.
+# 2. Go to "APIs & Services" > "Credentials".
+# 3. Click "Create Credentials" > "OAuth client ID".
+# 4. Select "Web application" as the application type.
+# 5. Add `http://localhost:3000` (or your deployment URL) to "Authorized JavaScript origins".
+# 6. Add `http://localhost:3000/api/auth/google` (or your deployment URL + /api/auth/google) to "Authorized redirect URIs".
+# 7. You will get a Client ID and Client Secret.
+#
+# GOOGLE_CLIENT_ID: Your Google API Client ID. Used for server-side authentication to verify the ID token.
+# GOOGLE_CLIENT_SECRET: Your Google API Client Secret. Used for server-side authentication.
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID: Your Google API Client ID. This is a public key used by the client-side Google Login button.
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-google-client-id"
 
 # OpenAI
 OPENAI_API_KEY="your-openai-api-key-here"

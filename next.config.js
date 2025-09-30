@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client']
   },

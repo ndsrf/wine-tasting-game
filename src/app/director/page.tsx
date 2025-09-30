@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Wine, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Difficulty } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
+import { authenticatedFetch } from '@/lib/auth-client'
 
 interface WineEntry {
   name: string
@@ -15,7 +17,7 @@ interface WineEntry {
 
 export default function DirectorPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth()
   const [difficulty, setDifficulty] = useState<Difficulty>('NOVICE')
   const [wineCount, setWineCount] = useState(3)
   const [wines, setWines] = useState<WineEntry[]>([
@@ -25,24 +27,26 @@ export default function DirectorPage() {
   const [error, setError] = useState('')
   const [gameCode, setGameCode] = useState('')
   const [similarityWarning, setSimilarityWarning] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('user')
+    setMounted(true)
+  }, [])
 
-    if (!token || !userData) {
-      router.push('/auth/login')
-      return
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (mounted && !authLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/director')
     }
-
-    setUser(JSON.parse(userData))
-  }, [router])
+  }, [mounted, authLoading, isAuthenticated, router])
 
   useEffect(() => {
-    const newWines = Array.from({ length: wineCount }, (_, i) =>
-      wines[i] || { name: '', year: new Date().getFullYear() }
-    )
-    setWines(newWines)
+    setWines(prevWines => {
+      const newWines = Array.from({ length: wineCount }, (_, i) =>
+        prevWines[i] || { name: '', year: new Date().getFullYear() }
+      )
+      return newWines
+    })
   }, [wineCount])
 
   const updateWine = (index: number, field: keyof WineEntry, value: string | number) => {
@@ -52,6 +56,8 @@ export default function DirectorPage() {
   }
 
   const handleCreateGame = async () => {
+    if (!mounted || !user) return
+
     const incompleteWines = wines.some(wine => !wine.name.trim())
     if (incompleteWines) {
       setError('Please fill in all wine names')
@@ -63,13 +69,8 @@ export default function DirectorPage() {
     setSimilarityWarning('')
 
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/games/create', {
+      const response = await authenticatedFetch('/api/games/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({
           difficulty,
           wineCount,
@@ -85,7 +86,12 @@ export default function DirectorPage() {
           setSimilarityWarning(data.similarityWarning)
         }
       } else {
-        setError(data.error || 'Failed to create game')
+        if (response.status === 401) {
+          // Unauthorized - redirect to login
+          router.push('/auth/login?redirect=/director')
+        } else {
+          setError(data.error || 'Failed to create game')
+        }
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -100,8 +106,32 @@ export default function DirectorPage() {
     }
   }
 
-  if (!user) {
-    return <div>Loading...</div>
+  const handleSignOut = async () => {
+    await logout()
+  }
+
+  // Show loading state until mounted and auth resolved
+  if (!mounted || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading...</h2>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated (redirect will happen via useEffect)
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Authenticating...</h2>
+        </div>
+      </div>
+    )
   }
 
   if (gameCode) {
@@ -246,11 +276,7 @@ export default function DirectorPage() {
 
         <div className="text-center mt-6">
           <button
-            onClick={() => {
-              localStorage.removeItem('token')
-              localStorage.removeItem('user')
-              router.push('/')
-            }}
+            onClick={handleSignOut}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             Sign out

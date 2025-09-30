@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { GameState, Player } from '@/types'
@@ -10,15 +8,22 @@ interface UseSocketOptions {
   onJoinedAsPlayer?: (data: { player: Player; game?: any }) => void
   onJoinedAsDirector?: (data: { message: string }) => void
   onGameStarted?: (state: GameState) => void
-  onPhaseChanged?: (phase: string) => void
+  onPhaseChanged?: (data: { phase: string } | string) => void
   onWineChanged?: (state: GameState) => void
-  onAnswerSubmitted?: (data: { correctCount: number }) => void
+  onAnswerSubmitted?: (data: { correctCount: number; totalQuestions?: number; roundScore?: number; error?: string }) => void
+  onScoreUpdated?: (data: { playerId: string; newScore: number; roundScore: number; correctCount: number; totalQuestions: number }) => void
+  onGameFinished?: (state: GameState) => void
   onError?: (error: { message: string }) => void
 }
 
 export function useSocket(options: UseSocketOptions = {}) {
   const socketRef = useRef<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const optionsRef = useRef(options)
+
+  useEffect(() => {
+    optionsRef.current = options
+  })
 
   useEffect(() => {
     const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000')
@@ -32,15 +37,23 @@ export function useSocket(options: UseSocketOptions = {}) {
       setIsConnected(false)
     })
 
-    socket.on('game-state', options.onGameState || (() => {}))
-    socket.on('player-joined', options.onPlayerJoined || (() => {}))
-    socket.on('joined-as-player', options.onJoinedAsPlayer || (() => {}))
-    socket.on('joined-as-director', options.onJoinedAsDirector || (() => {}))
-    socket.on('game-started', options.onGameStarted || (() => {}))
-    socket.on('phase-changed', options.onPhaseChanged || (() => {}))
-    socket.on('wine-changed', options.onWineChanged || (() => {}))
-    socket.on('answer-submitted', options.onAnswerSubmitted || (() => {}))
-    socket.on('error', options.onError || (() => {}))
+    const getOption = (key: keyof UseSocketOptions) => (...args: any[]) => {
+      if (optionsRef.current[key]) {
+        (optionsRef.current[key] as Function)(...args)
+      }
+    }
+
+    socket.on('game-state', getOption('onGameState'))
+    socket.on('player-joined', getOption('onPlayerJoined'))
+    socket.on('joined-as-player', getOption('onJoinedAsPlayer'))
+    socket.on('joined-as-director', getOption('onJoinedAsDirector'))
+    socket.on('game-started', getOption('onGameStarted'))
+    socket.on('phase-changed', getOption('onPhaseChanged'))
+    socket.on('wine-changed', getOption('onWineChanged'))
+    socket.on('answer-submitted', getOption('onAnswerSubmitted'))
+    socket.on('score-updated', getOption('onScoreUpdated'))
+    socket.on('game-finished', getOption('onGameFinished'))
+    socket.on('error', getOption('onError'))
 
     return () => {
       socket.disconnect()
@@ -48,19 +61,23 @@ export function useSocket(options: UseSocketOptions = {}) {
   }, [])
 
   const joinGame = (data: { code: string; nickname?: string; userId?: string }) => {
-    socketRef.current?.emit('join-game', data)
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('join-game', data)
   }
 
   const startGame = (data: { code: string; userId: string }) => {
-    socketRef.current?.emit('start-game', data)
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('start-game', data)
   }
 
   const changePhase = (data: { code: string; userId: string; phase: string }) => {
-    socketRef.current?.emit('change-phase', data)
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('change-phase', data)
   }
 
   const nextWine = (data: { code: string; userId: string }) => {
-    socketRef.current?.emit('next-wine', data)
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('next-wine', data)
   }
 
   const submitAnswer = (data: {
@@ -70,7 +87,13 @@ export function useSocket(options: UseSocketOptions = {}) {
     characteristicType: string
     answers: Record<string, string>
   }) => {
-    socketRef.current?.emit('submit-answer', data)
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('submit-answer', data)
+  }
+
+  const finishGame = (data: { code: string; userId: string }) => {
+    if (typeof window === 'undefined' || !socketRef.current) return
+    socketRef.current.emit('finish-game', data)
   }
 
   return {
@@ -80,5 +103,6 @@ export function useSocket(options: UseSocketOptions = {}) {
     changePhase,
     nextWine,
     submitAnswer,
+    finishGame,
   }
 }

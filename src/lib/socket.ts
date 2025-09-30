@@ -42,10 +42,24 @@ export class GameSocket {
             return
           }
 
-          socket.join(data.code)
+          await socket.join(data.code)
+          console.log(`Socket ${socket.id} joined room ${data.code}`)
 
           if (data.userId && data.userId === game.directorId) {
-            socket.emit('joined-as-director', { game })
+            // Check if director player already exists, if not create one
+            let directorPlayer = game.players.find(p => p.id === `director-${data.userId}`)
+            if (!directorPlayer) {
+              directorPlayer = await prisma.player.create({
+                data: {
+                  id: `director-${data.userId}`,
+                  gameId: game.id,
+                  nickname: game.director.email || 'Director',
+                  sessionId: `director-session-${socket.id}`,
+                },
+              })
+            }
+            socket.emit('joined-as-director', { game, directorPlayer })
+            console.log(`Director ${data.userId} joined game ${data.code}`)
           } else if (data.nickname) {
             const existingPlayer = game.players.find(p => p.nickname === data.nickname)
 
@@ -110,6 +124,11 @@ export class GameSocket {
         try {
           const game = await prisma.game.findUnique({
             where: { code: data.code },
+            include: {
+              director: true,
+              players: true,
+              wines: true,
+            },
           })
 
           if (!game || game.directorId !== data.userId) {
@@ -126,7 +145,17 @@ export class GameSocket {
             await redis.set(stateKey, JSON.stringify(state))
           }
 
+          // Get updated game state after phase change
+          const gameState = await this.getGameState(data.code)
+
+          // Emit both phase-changed event and full game state to ensure synchronization
+          console.log(`Emitting phase change to room ${data.code}: ${data.phase}`)
+          console.log(`Room ${data.code} has ${this.io.sockets.adapter.rooms.get(data.code)?.size || 0} connected clients`)
+
           this.io.to(data.code).emit('phase-changed', { phase: data.phase })
+          this.io.to(data.code).emit('game-state', gameState)
+
+          console.log(`Phase changed to ${data.phase} for game ${data.code}`)
         } catch (error) {
           console.error('Change phase error:', error)
           socket.emit('error', { message: 'Failed to change phase' })
@@ -137,6 +166,11 @@ export class GameSocket {
         try {
           const game = await prisma.game.findUnique({
             where: { code: data.code },
+            include: {
+              director: true,
+              players: true,
+              wines: true,
+            },
           })
 
           if (!game || game.directorId !== data.userId) {
@@ -164,10 +198,60 @@ export class GameSocket {
           }
 
           const gameState = await this.getGameState(data.code)
+
+          // Emit multiple events to ensure proper synchronization
           this.io.to(data.code).emit('wine-changed', gameState)
+          this.io.to(data.code).emit('phase-changed', { phase: 'VISUAL' })
+          this.io.to(data.code).emit('game-state', gameState)
+
+          console.log(`Moved to wine ${gameState?.currentWine} for game ${data.code}`)
         } catch (error) {
           console.error('Next wine error:', error)
           socket.emit('error', { message: 'Failed to move to next wine' })
+        }
+      })
+
+      socket.on('finish-game', async (data: { code: string; userId: string }) => {
+        try {
+          const game = await prisma.game.findUnique({
+            where: { code: data.code },
+            include: {
+              director: true,
+              players: {
+                orderBy: {
+                  score: 'desc'
+                }
+              }
+            },
+          })
+
+          if (!game || game.directorId !== data.userId) {
+            socket.emit('error', { message: 'Unauthorized' })
+            return
+          }
+
+          await prisma.game.update({
+            where: { id: game.id },
+            data: { status: 'FINISHED' },
+          })
+
+          const stateKey = `game:${data.code}:state`
+          const currentState = await redis.get(stateKey)
+
+          if (currentState) {
+            const state = JSON.parse(currentState)
+            state.isGameFinished = true
+            await redis.set(stateKey, JSON.stringify(state))
+          }
+
+          const gameState = await this.getGameState(data.code)
+          this.io.to(data.code).emit('game-finished', gameState)
+          this.io.to(data.code).emit('game-state', gameState)
+
+          console.log(`Game ${data.code} finished successfully`)
+        } catch (error) {
+          console.error('Finish game error:', error)
+          socket.emit('error', { message: 'Failed to finish game' })
         }
       })
 
@@ -195,44 +279,66 @@ export class GameSocket {
           const correctAnswers = characteristics[data.characteristicType.toLowerCase()]
 
           let correctCount = 0
+          let totalQuestions = 0
           const answerEntries = Object.entries(data.answers)
 
-          for (const [characteristic, answer] of answerEntries) {
-            const isCorrect = correctAnswers.includes(answer)
-            if (isCorrect) correctCount++
+          // Calculate total possible correct answers for this wine and phase
+          totalQuestions = correctAnswers.length
 
-            await prisma.answer.upsert({
-              where: {
-                playerId_wineId_characteristicType: {
-                  playerId: data.playerId,
-                  wineId: wine.id,
-                  characteristicType: data.characteristicType,
-                },
-              },
-              update: {
-                answer,
-                isCorrect,
-              },
-              create: {
+          // Collect the characteristics that were selected for this wine
+          const selectedCharacteristics: string[] = []
+
+          for (const [selectedCharacteristic, selectedWine] of answerEntries) {
+            // Check if this answer is for the current wine
+            if (selectedWine === `Wine ${data.wineNumber}`) {
+              selectedCharacteristics.push(selectedCharacteristic)
+              // Check if the selected characteristic is correct for this wine
+              const isCorrect = correctAnswers.includes(selectedCharacteristic)
+              if (isCorrect) correctCount++
+            }
+          }
+
+          // Store answer as comma-separated list of characteristics
+          const answerSummary = selectedCharacteristics.join(', ')
+
+          await prisma.answer.upsert({
+            where: {
+              playerId_wineId_characteristicType: {
                 playerId: data.playerId,
                 wineId: wine.id,
                 characteristicType: data.characteristicType,
-                answer,
-                isCorrect,
               },
-            })
-          }
+            },
+            update: {
+              answer: answerSummary,
+              isCorrect: correctCount === totalQuestions, // Only correct if all characteristics match
+            },
+            create: {
+              playerId: data.playerId,
+              wineId: wine.id,
+              characteristicType: data.characteristicType,
+              answer: answerSummary,
+              isCorrect: correctCount === totalQuestions, // Only correct if all characteristics match
+            },
+          })
 
+          // Update player score - award points based on correct characteristics
+          const roundScore = correctCount
           await prisma.player.update({
             where: { id: data.playerId },
             data: {
               score: {
-                increment: correctCount,
+                increment: roundScore,
               },
             },
           })
 
-          socket.emit('answer-submitted', { correctCount })
+          socket.emit('answer-submitted', {
+            correctCount,
+            totalQuestions,
+            roundScore,
+            success: true
+          })
         } catch (error) {
           console.error('Submit answer error:', error)
           socket.emit('error', { message: 'Failed to submit answer' })
@@ -251,8 +357,16 @@ export class GameSocket {
         where: { code },
         include: {
           director: true,
-          players: true,
-          wines: true,
+          players: {
+            orderBy: {
+              joinedAt: 'asc'
+            }
+          },
+          wines: {
+            orderBy: {
+              number: 'asc'
+            }
+          },
         },
       })
 
@@ -264,13 +378,26 @@ export class GameSocket {
       const state = currentState ? JSON.parse(currentState) : {
         currentWine: 1,
         currentPhase: 'VISUAL',
-        isGameStarted: false,
-        isGameFinished: false,
+        isGameStarted: game.status === 'IN_PROGRESS',
+        isGameFinished: game.status === 'FINISHED',
       }
 
       return {
-        game,
-        ...state,
+        game: {
+          ...game,
+          director: game.director ? {
+            ...game.director,
+            googleId: game.director.googleId || undefined
+          } : undefined,
+          wines: game.wines?.map(wine => ({
+            ...wine,
+            characteristics: wine.characteristics as any
+          }))
+        },
+        currentWine: state.currentWine || 1,
+        currentPhase: state.currentPhase || 'VISUAL',
+        isGameStarted: state.isGameStarted || game.status === 'IN_PROGRESS',
+        isGameFinished: state.isGameFinished || game.status === 'FINISHED',
         players: game.players,
       }
     } catch (error) {

@@ -1,3 +1,9 @@
+# Claude
+outputs/
+.claude/
+docs/
+
+
 # Dependencies
 node_modules/
 npm-debug.log*

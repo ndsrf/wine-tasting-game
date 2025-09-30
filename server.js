@@ -37,7 +37,7 @@ app.prepare().then(() => {
   io.on('connection', (socket) => {
     console.log('🔌 User connected:', socket.id)
 
-    socket.on('join-game', (data) => {
+    socket.on('join-game', async (data) => {
       console.log('🎮 Join game:', data)
       const { code, nickname, userId } = data
 
@@ -58,14 +58,113 @@ app.prepare().then(() => {
       const gameState = gameStates.get(code)
 
       if (userId) {
-        // Director joining
-        socket.emit('joined-as-director', { message: 'Director joined successfully' })
+        // Director joining - create director as a player in database
+        const { PrismaClient } = require('@prisma/client')
+        const prisma = new PrismaClient()
+
+        try {
+          const game = await prisma.game.findUnique({
+            where: { code },
+            include: { players: true, director: true }
+          })
+
+          if (!game) {
+            socket.emit('error', { message: 'Game not found' })
+            await prisma.$disconnect()
+            return
+          }
+
+          const directorPlayerId = `director-${userId}-${code}`
+
+          // Check if director player exists in database (use upsert to avoid duplicate)
+          const directorPlayer = await prisma.player.upsert({
+            where: {
+              id: directorPlayerId
+            },
+            update: {
+              // Update session ID in case director reconnects
+              sessionId: `director-session-${socket.id}`
+            },
+            create: {
+              id: directorPlayerId,
+              gameId: game.id,
+              nickname: game.director.email || 'Director',
+              sessionId: `director-session-${socket.id}`,
+              score: 0
+            }
+          })
+          console.log(`✅ Director player ready in database: ${directorPlayer.id} for game ${code}`)
+
+          await prisma.$disconnect()
+
+          // Add to in-memory state if not already there
+          const existingInMemory = gameState.players.find(p => p.id === directorPlayerId)
+          if (!existingInMemory) {
+            gameState.players.push({
+              id: directorPlayer.id,
+              nickname: directorPlayer.nickname,
+              gameId: code,
+              score: 0
+            })
+            gameStates.set(code, gameState)
+          }
+
+          socket.emit('joined-as-director', {
+            message: 'Director joined successfully',
+            directorPlayer: directorPlayer
+          })
+        } catch (dbError) {
+          console.error('Error creating director player:', dbError)
+          socket.emit('error', { message: 'Failed to join as director' })
+          await prisma.$disconnect()
+          return
+        }
       } else if (nickname) {
-        // Player joining - check if already exists
-        const existingPlayer = gameState.players.find(p => p.nickname === nickname)
-        if (!existingPlayer) {
-          const newPlayer = { id: socket.id, nickname, gameId: code, score: 0 }
-          gameState.players.push(newPlayer)
+        // Player joining - create in database
+        const { PrismaClient } = require('@prisma/client')
+        const prisma = new PrismaClient()
+
+        try {
+          // Fetch the full game to get the gameId
+          const game = await prisma.game.findUnique({
+            where: { code },
+            include: { players: true }
+          })
+
+          if (!game) {
+            socket.emit('error', { message: 'Game not found' })
+            await prisma.$disconnect()
+            return
+          }
+
+          // Check if nickname is taken in database
+          const existingPlayer = game.players.find(p => p.nickname === nickname)
+          if (existingPlayer) {
+            socket.emit('error', { message: 'Nickname already taken' })
+            await prisma.$disconnect()
+            return
+          }
+
+          // Create player in database
+          const newPlayer = await prisma.player.create({
+            data: {
+              gameId: game.id,
+              nickname,
+              sessionId: socket.id,
+              score: 0
+            }
+          })
+
+          await prisma.$disconnect()
+
+          // Add to in-memory state
+          const memoryPlayer = {
+            id: newPlayer.id, // Use database ID, not socket ID
+            nickname: newPlayer.nickname,
+            gameId: code,
+            score: 0
+          }
+          gameState.players.push(memoryPlayer)
           gameStates.set(code, gameState)
 
           socket.emit('joined-as-player', {
@@ -75,9 +174,11 @@ app.prepare().then(() => {
           socket.to(code).emit('player-joined', {
             player: newPlayer
           })
-          console.log(`✅ Player ${nickname} added. Total players: ${gameState.players.length}`)
-        } else {
-          socket.emit('error', { message: 'Nickname already taken' })
+          console.log(`✅ Player ${nickname} (${newPlayer.id}) added to database and memory. Total players: ${gameState.players.length}`)
+        } catch (dbError) {
+          console.error('Error creating player:', dbError)
+          socket.emit('error', { message: 'Failed to join game' })
+          await prisma.$disconnect()
           return
         }
       }
@@ -88,16 +189,24 @@ app.prepare().then(() => {
 
     socket.on('start-game', (data) => {
       console.log('🚀 Start game:', data)
-      const { code } = data
+      const { code, userId } = data
 
       const gameState = gameStates.get(code)
       if (gameState) {
+        // Update the game status
         gameState.game.status = 'IN_PROGRESS'
         gameState.isGameStarted = true
+        gameState.isGameFinished = false
+        gameState.currentWine = 1
+        gameState.currentPhase = 'VISUAL'
         gameStates.set(code, gameState)
 
+        // Emit game-started event to all clients in the room
         io.to(code).emit('game-started', gameState)
         console.log(`✅ Game ${code} started with ${gameState.players.length} players`)
+      } else {
+        console.log(`❌ No game state found for code: ${code}`)
+        socket.emit('error', { message: 'Game not found' })
       }
     })
 
@@ -129,9 +238,209 @@ app.prepare().then(() => {
       }
     })
 
-    socket.on('submit-answer', (data) => {
+    socket.on('submit-answer', async (data) => {
       console.log('📝 Submit answer:', data)
-      socket.emit('answer-submitted', { correctCount: 1 })
+      const { code, playerId, wineNumber, characteristicType, answers } = data
+
+      try {
+        // Fetch game data to get correct wine characteristics
+        const response = await fetch(`http://localhost:3000/api/games/${code}`)
+        const gameData = await response.json()
+
+        if (gameData.error) {
+          socket.emit('answer-submitted', { error: 'Game not found' })
+          return
+        }
+
+        // Calculate score based on correct answers
+        const wines = gameData.game.wines
+        let correctCount = 0
+        let totalQuestions = 0
+
+        const phase = characteristicType.toLowerCase()
+
+        // Create correct answer key
+        const correctAnswers = {}
+        wines.forEach((wine, index) => {
+          if (wine.characteristics && wine.characteristics[phase]) {
+            wine.characteristics[phase].forEach((char) => {
+              correctAnswers[char] = `Wine ${index + 1}`
+            })
+          }
+        })
+
+        // Save answers to database
+        const { PrismaClient } = require('@prisma/client')
+        const prisma = new PrismaClient()
+
+        try {
+          console.log(`💾 Attempting to save answers - playerId: ${playerId}, gameId: ${gameData.game.id}, wineNumber: ${wineNumber}`)
+
+          // Find the wine in database
+          const wine = await prisma.wine.findFirst({
+            where: {
+              gameId: gameData.game.id,
+              number: wineNumber
+            }
+          })
+
+          if (!wine) {
+            console.error(`❌ Wine not found - gameId: ${gameData.game.id}, wineNumber: ${wineNumber}`)
+            await prisma.$disconnect()
+            socket.emit('answer-submitted', { error: 'Wine not found' })
+            return
+          }
+
+          console.log(`✅ Found wine: ${wine.id}`)
+
+          // Get the correct characteristics for this wine
+          const wineCharacteristics = wine.characteristics[phase] || []
+          totalQuestions = wineCharacteristics.length
+
+          // Collect the characteristics that were selected for this wine
+          const selectedCharacteristics = []
+
+          // Calculate correct answers
+          Object.entries(answers).forEach(([characteristic, playerAnswer]) => {
+            // Check if this answer is for the current wine
+            if (playerAnswer === `Wine ${wineNumber}`) {
+              selectedCharacteristics.push(characteristic)
+              if (correctAnswers[characteristic] === playerAnswer) {
+                correctCount++
+              }
+            }
+          })
+
+          // Store answer as comma-separated list of characteristics
+          const answerSummary = selectedCharacteristics.join(', ')
+
+          console.log(`📊 Answer summary: ${answerSummary}, correct: ${correctCount}/${totalQuestions}`)
+
+          // Save answer to database using playerId directly (it's the database ID, not socket ID)
+          await prisma.answer.upsert({
+            where: {
+              playerId_wineId_characteristicType: {
+                playerId: playerId,
+                wineId: wine.id,
+                characteristicType: characteristicType
+              }
+            },
+            update: {
+              answer: answerSummary,
+              isCorrect: correctCount === totalQuestions
+            },
+            create: {
+              playerId: playerId,
+              wineId: wine.id,
+              characteristicType: characteristicType,
+              answer: answerSummary,
+              isCorrect: correctCount === totalQuestions
+            }
+          })
+
+          console.log(`✅ Answer saved to database for player ${playerId}`)
+
+          // Update player score in database
+          const roundScore = correctCount
+          const updatedPlayer = await prisma.player.update({
+            where: { id: playerId },
+            data: {
+              score: {
+                increment: roundScore
+              }
+            }
+          })
+          console.log(`✅ Player ${playerId} score updated: ${updatedPlayer.score} (added ${roundScore} points)`)
+
+          console.log(`✅ Player score updated: +${roundScore}`)
+
+        } catch (dbError) {
+          console.error('❌ Database error saving answers:', dbError)
+          console.error('Error details:', {
+            name: dbError.name,
+            message: dbError.message,
+            code: dbError.code,
+            playerId,
+            wineNumber,
+            characteristicType
+          })
+          await prisma.$disconnect()
+          socket.emit('answer-submitted', { error: 'Failed to save answers' })
+          return
+        }
+
+        await prisma.$disconnect()
+
+        // Update player score in game state
+        const gameState = gameStates.get(code)
+        if (gameState) {
+          const player = gameState.players.find((p) => p.id === playerId)
+          if (player) {
+            // Add points based on percentage correct (max 10 points per round)
+            const roundScore = Math.round((correctCount / totalQuestions) * 10)
+            player.score += roundScore
+            gameStates.set(code, gameState)
+
+            // Emit score update to all players in the room
+            io.to(code).emit('score-updated', {
+              playerId,
+              newScore: player.score,
+              roundScore,
+              correctCount,
+              totalQuestions
+            })
+          }
+        }
+
+        socket.emit('answer-submitted', {
+          correctCount,
+          totalQuestions,
+          roundScore: Math.round((correctCount / totalQuestions) * 10)
+        })
+
+      } catch (error) {
+        console.error('Submit answer error:', error)
+        socket.emit('answer-submitted', { error: 'Failed to process answers' })
+      }
+    })
+
+    socket.on('finish-game', async (data) => {
+      console.log('🏁 Finish game:', data)
+      const { code, userId } = data
+
+      try {
+        // Update database
+        const { PrismaClient } = require('@prisma/client')
+        const prisma = new PrismaClient()
+
+        const game = await prisma.game.findUnique({ where: { code } })
+        if (game) {
+          await prisma.game.update({
+            where: { code },
+            data: { status: 'FINISHED' }
+          })
+          console.log(`✅ Game ${code} marked as FINISHED in database`)
+        }
+        await prisma.$disconnect()
+
+        // Update in-memory state
+        const gameState = gameStates.get(code)
+        if (gameState) {
+          gameState.game.status = 'FINISHED'
+          gameState.isGameFinished = true
+          gameStates.set(code, gameState)
+
+          // Emit game-finished event to all clients in the room
+          io.to(code).emit('game-finished', gameState)
+          console.log(`✅ Game ${code} finished and broadcasted`)
+        } else {
+          console.log(`❌ No game state found for code: ${code}`)
+          socket.emit('error', { message: 'Game not found' })
+        }
+      } catch (error) {
+        console.error('Error finishing game:', error)
+        socket.emit('error', { message: 'Failed to finish game' })
+      }
     })
 
     socket.on('disconnect', () => {
