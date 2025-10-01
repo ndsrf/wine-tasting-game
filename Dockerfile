@@ -14,6 +14,7 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Stage 2: Builder
 FROM node:18-alpine AS builder
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # Copy package files and install all dependencies (including dev)
