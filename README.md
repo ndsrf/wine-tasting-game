@@ -20,7 +20,7 @@ A multiplayer web application for conducting wine tasting sessions where players
 - **Caching**: Redis for session management and game state
 - **AI**: OpenAI API for wine characteristic generation
 - **Authentication**: JWT + Google OAuth
-- **Deployment**: Optimized for Vercel/Docker deployment
+- **Deployment**: Docker deployment or VPS with custom Node.js server
 
 ## Quick Start
 
@@ -169,14 +169,9 @@ NODE_ENV="development"
 
 ## Deployment
 
-### Vercel (Recommended)
+**Note**: This application uses Socket.io for real-time functionality, which requires a persistent WebSocket connection. It is **not compatible** with serverless platforms like Vercel, AWS Lambda, or Netlify Functions. Deploy to a VPS or container platform instead.
 
-1. Push code to GitHub/GitLab
-2. Connect repository to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy automatically on push
-
-### Docker
+### Docker (Recommended)
 
 ```bash
 # Build image
@@ -186,14 +181,35 @@ docker build -t wine-tasting-game .
 docker run -p 3000:3000 --env-file .env wine-tasting-game
 ```
 
-### Manual Deployment
+### VPS Deployment (DigitalOcean, Linode, AWS EC2, etc.)
 
 ```bash
+# SSH into your server
+ssh user@your-server-ip
+
+# Clone repository
+git clone <repository-url>
+cd wine-tasting-game
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+nano .env  # Edit with your values
+
+# Set up database
+npx prisma generate
+npx prisma db push
+
 # Build for production
 npm run build
 
-# Start production server
-npm start
+# Start production server (use PM2 for process management)
+npm install -g pm2
+pm2 start npm --name "wine-tasting" -- start
+pm2 save
+pm2 startup
 ```
 
 ## Development

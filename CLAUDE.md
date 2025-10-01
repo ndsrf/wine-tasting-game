@@ -96,8 +96,7 @@ npm run db:studio    # Open Prisma Studio
 - GOOGLE_CLIENT_ID/SECRET (Google OAuth - optional)
 
 ## Deployment Notes
-- Designed for Vercel deployment
-- Custom server.js for Socket.io integration
+- Requires custom server.js for Socket.io integration (not compatible with serverless platforms)
 - PWA manifest and service worker included
 - Multi-language support (en, es, fr, de)
 
