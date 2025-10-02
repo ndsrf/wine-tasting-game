@@ -59,16 +59,21 @@ function LoginPageContent() {
   }
 
   const onGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    console.log('Google login initiated', credentialResponse)
     setLoading(true)
     setError('')
     try {
       const result = await handleGoogleSuccess(credentialResponse)
+      console.log('Google login result:', result)
       if (result.success) {
+        console.log('Redirecting to:', redirectPath)
         router.push(redirectPath)
       } else {
+        console.error('Google login failed:', result.error)
         setError(result.error || t('auth.loginFailed'))
       }
     } catch (err) {
+      console.error('Google login exception:', err)
       setError(t('errors.tryAgain'))
     } finally {
       setLoading(false)

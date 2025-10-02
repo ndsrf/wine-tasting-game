@@ -2,17 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { generateToken } from '@/lib/auth'
+import { setAuthCookies, generateRefreshToken } from '@/lib/auth-server'
 
-const googleAuthSchema = z.object({
-  googleId: z.string(),
-  email: z.string().email(),
-  username: z.string(),
+const googleTokenSchema = z.object({
+  token: z.string(),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { googleId, email, username } = googleAuthSchema.parse(body)
+    const { token } = googleTokenSchema.parse(body)
+
+    // Decode the Google JWT token
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf-8')
+
+    const payload = JSON.parse(jsonPayload)
+    const googleId = payload.sub
+    const email = payload.email
+    const username = payload.name || email.split('@')[0]
+
+    if (!googleId || !email) {
+      return NextResponse.json(
+        { error: 'Invalid Google token' },
+        { status: 400 }
+      )
+    }
 
     let user = await prisma.user.findFirst({
       where: {
@@ -38,16 +54,22 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const token = generateToken(user.id)
+    const authToken = generateToken(user.id)
+    const refreshToken = generateRefreshToken(user.id)
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
       },
-      token,
+      success: true,
     })
+
+    // Set HTTP-only cookies
+    setAuthCookies(response, authToken, refreshToken)
+
+    return response
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

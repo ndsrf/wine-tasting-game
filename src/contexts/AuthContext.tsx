@@ -147,8 +147,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await checkAuthStatus()
   }
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+
+  // Debug: Log the client ID (first/last 10 chars only for security)
+  useEffect(() => {
+    if (googleClientId) {
+      console.log('Google Client ID loaded:', googleClientId.substring(0, 10) + '...' + googleClientId.substring(googleClientId.length - 10))
+    } else {
+      console.error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set!')
+    }
+  }, [googleClientId])
+
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <AuthContext.Provider
         value={{
           user,

@@ -75,22 +75,27 @@ NEXTAUTH_URL="http://localhost:3000"
 JWT_SECRET="your-jwt-secret-here"
 
 # Google OAuth (optional)
-# To configure Google OAuth, you need to create a project in the Google API Console:
-# https://console.developers.google.com/
-# 1. Create a new project or select an existing one.
-# 2. Go to "APIs & Services" > "Credentials".
-# 3. Click "Create Credentials" > "OAuth client ID".
-# 4. Select "Web application" as the application type.
-# 5. Add `http://localhost:3000` (or your deployment URL) to "Authorized JavaScript origins".
-# 6. Add `http://localhost:3000/api/auth/google` (or your deployment URL + /api/auth/google) to "Authorized redirect URIs".
-# 7. You will get a Client ID and Client Secret.
+# To configure Google OAuth, follow these steps:
+# 1. Go to Google Cloud Console: https://console.cloud.google.com/apis/credentials
+# 2. Create a new project or select an existing one
+# 3. Go to "APIs & Services" > "Credentials"
+# 4. Click "Create Credentials" > "OAuth client ID"
+# 5. Select "Web application" as the application type
+# 6. Under "Authorized JavaScript origins", add:
+#    - http://localhost:3000 (for development)
+#    - https://yourdomain.com (for production)
+# 7. Under "Authorized redirect URIs" (optional for @react-oauth/google):
+#    - http://localhost:3000 (for development)
+#    - https://yourdomain.com (for production)
+# 8. Click "Create" and copy your Client ID and Client Secret
 #
-# GOOGLE_CLIENT_ID: Your Google API Client ID. Used for server-side authentication to verify the ID token.
-# GOOGLE_CLIENT_SECRET: Your Google API Client Secret. Used for server-side authentication.
-# NEXT_PUBLIC_GOOGLE_CLIENT_ID: Your Google API Client ID. This is a public key used by the client-side Google Login button.
-GOOGLE_CLIENT_ID="your-google-client-id"
+# IMPORTANT: All three environment variables below are required:
+# - GOOGLE_CLIENT_ID: Server-side authentication (verifies ID tokens)
+# - GOOGLE_CLIENT_SECRET: Server-side authentication
+# - NEXT_PUBLIC_GOOGLE_CLIENT_ID: Client-side Google Login button (must have NEXT_PUBLIC_ prefix)
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
-NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-google-client-id"
+NEXT_PUBLIC_GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 
 # OpenAI
 OPENAI_API_KEY="your-openai-api-key-here"
