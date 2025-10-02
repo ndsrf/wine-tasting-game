@@ -24,6 +24,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [googleClientId, setGoogleClientId] = useState<string>('')
   const router = useRouter()
   const pathname = usePathname()
 
@@ -147,16 +148,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await checkAuthStatus()
   }
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
-
-  // Debug: Log the client ID (first/last 10 chars only for security)
+  // Fetch Google Client ID from server at runtime
   useEffect(() => {
-    if (googleClientId) {
-      console.log('Google Client ID loaded:', googleClientId.substring(0, 10) + '...' + googleClientId.substring(googleClientId.length - 10))
-    } else {
-      console.error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set!')
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config')
+        if (response.ok) {
+          const config = await response.json()
+          const clientId = config.googleClientId || ''
+          setGoogleClientId(clientId)
+
+          // Debug: Log the client ID (first/last 10 chars only for security)
+          if (clientId) {
+            console.log('Google Client ID loaded:', clientId.substring(0, 10) + '...' + clientId.substring(clientId.length - 10))
+          } else {
+            console.error('Google Client ID is not configured!')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch config:', error)
+      }
     }
-  }, [googleClientId])
+
+    fetchConfig()
+  }, [])
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
