@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -10,10 +10,15 @@ import { Wine, Users } from 'lucide-react'
 import { useSocket } from '@/hooks/useSocket'
 import { GameState, Player } from '@/types'
 import { VISUAL_CHARACTERISTICS, SMELL_CHARACTERISTICS, TASTE_CHARACTERISTICS } from '@/lib/wine-options'
+import { useTranslation } from 'react-i18next'
+import '@/lib/i18n'
+import { normalizeCharacteristicToEnglish } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 function GamePageComponent() {
   const params = useParams()
   const code = params.code as string
+  const { t, ready: i18nReady } = useTranslation()
   const [nickname, setNickname] = useState('')
   const [player, setPlayer] = useState<Player | null>(null)
   const [gameState, setGameState] = useState<GameState | null>(null)
@@ -71,7 +76,7 @@ function GamePageComponent() {
 
   const handleJoinGame = async () => {
     if (!nickname.trim()) {
-      setError('Please enter a nickname')
+      setError(t('game.enterNicknameError'))
       return
     }
 
@@ -82,7 +87,7 @@ function GamePageComponent() {
       // Game validation already done in useEffect, just join via socket
       joinGame({ code, nickname: nickname.trim() })
     } catch (err) {
-      setError('Failed to join game')
+      setError(t('game.failedToJoin'))
       setJoining(false)
     }
     // Don't set joining to false here - let the socket response handle it
@@ -101,19 +106,19 @@ function GamePageComponent() {
           }
         })
         .catch(() => {
-          setError('Failed to connect to game')
+          setError(t('errors.connectionError'))
         })
     }
-  }, [isConnected, code, player, gameInfo])
+  }, [isConnected, code, player, gameInfo, t])
 
   // Show connecting state after mounted but before socket connects
-  if (!isConnected) {
+  if (!isConnected || !i18nReady) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Connecting...</h2>
-          <p className="text-gray-600">Establishing connection to the game server...</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.connecting')}</h2>
+          <p className="text-gray-600">{t('game.connectingDescription')}</p>
         </Card>
       </div>
     )
@@ -123,10 +128,14 @@ function GamePageComponent() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full">
+          <div className="absolute top-4 right-4">
+            <LanguageSwitcher />
+          </div>
+
           <div className="text-center mb-8">
             <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900">Join Game</h1>
-            <p className="text-gray-600 mt-2">Game Code: <span className="font-bold tracking-wider">{code}</span></p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('game.joinGame')}</h1>
+            <p className="text-gray-600 mt-2">{t('game.gameCode', { code })}</p>
           </div>
 
           <Card>
@@ -139,19 +148,19 @@ function GamePageComponent() {
 
               {gameInfo && (
                 <div className="bg-wine-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-wine-700 mb-2">Game Info</h3>
-                  <p className="text-sm text-wine-600">Difficulty: {gameInfo.difficulty || 'Unknown'}</p>
-                  <p className="text-sm text-wine-600">Wines: {gameInfo.wineCount || 0}</p>
-                  <p className="text-sm text-wine-600">Status: {gameInfo.status || 'Unknown'}</p>
+                  <h3 className="font-semibold text-wine-700 mb-2">{t('game.gameInfo')}</h3>
+                  <p className="text-sm text-wine-600">{t('game.difficulty', { difficulty: gameInfo.difficulty || 'Unknown' })}</p>
+                  <p className="text-sm text-wine-600">{t('game.wines', { count: gameInfo.wineCount || 0 })}</p>
+                  <p className="text-sm text-wine-600">{t('game.status', { status: gameInfo.status || 'Unknown' })}</p>
                   {gameInfo.players && gameInfo.players.length > 0 && (
-                    <p className="text-sm text-wine-600">Players joined: {gameInfo.players.length}</p>
+                    <p className="text-sm text-wine-600">{t('game.playersJoined', { count: gameInfo.players.length })}</p>
                   )}
                 </div>
               )}
 
               <Input
-                label="Your Nickname"
-                placeholder="Enter your nickname"
+                label={t('game.yourNickname')}
+                placeholder={t('game.enterNickname')}
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 maxLength={20}
@@ -164,7 +173,7 @@ function GamePageComponent() {
                 className="w-full"
                 disabled={!nickname.trim()}
               >
-                Join Game
+                {t('game.joinGame')}
               </Button>
             </div>
           </Card>
@@ -177,6 +186,7 @@ function GamePageComponent() {
 }
 
 function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player: Player; gameState: GameState | null; submitAnswer: (data: any) => void; code: string }) {
+  const { t } = useTranslation()
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [gameData, setGameData] = useState<any>(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -207,20 +217,20 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
   useEffect(() => {
     if (gameState?.currentPhase) {
       const phaseName = gameState.currentPhase.charAt(0) + gameState.currentPhase.slice(1).toLowerCase()
-      setPhaseChangeNotification(`Now entering ${phaseName} phase`)
+      setPhaseChangeNotification(t('game.phase', { phase: phaseName }))
       const timer = setTimeout(() => {
         setPhaseChangeNotification('')
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [gameState?.currentPhase])
+  }, [gameState?.currentPhase, t])
 
   if (!gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading Game...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.loadingGame')}</h2>
         </Card>
       </div>
     )
@@ -230,21 +240,25 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-2xl mx-auto">
+          <div className="absolute top-4 right-4">
+            <LanguageSwitcher />
+          </div>
+
           <div className="text-center mb-8">
             <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900">Waiting for Game to Start</h1>
-            <p className="text-gray-600 mt-2">Welcome, {player.nickname}!</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('game.waitingForGame')}</h1>
+            <p className="text-gray-600 mt-2">{t('game.welcome', { nickname: player.nickname })}</p>
           </div>
 
           <Card>
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center text-gray-600">
                 <Users className="h-5 w-5 mr-2" />
-                <span>{gameState.players.length} players joined</span>
+                <span>{t('game.playersJoined', { count: gameState.players.length })}</span>
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Players:</h3>
+                <h3 className="font-semibold">{t('director.players', { count: gameState.players.length })}:</h3>
                 <div className="flex flex-wrap gap-2">
                   {gameState.players.map((p) => (
                     <span
@@ -262,7 +276,7 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
               </div>
 
               <p className="text-gray-600">
-                The director will start the game soon. Get your wine glasses ready!
+                {t('game.waitingDescription')}
               </p>
             </div>
           </Card>
@@ -278,6 +292,10 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-2xl mx-auto">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         {phaseChangeNotification && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-wine-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300">
             {phaseChangeNotification}
@@ -287,30 +305,30 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
         <div className="text-center mb-6">
           <Wine className="h-8 w-8 text-wine-600 mx-auto mb-2" />
           <h1 className="text-2xl font-bold text-gray-900">
-            Wine {gameState.currentWine}
+            {t('game.wineNumber', { number: gameState.currentWine })}
           </h1>
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
               gameState.currentPhase === 'VISUAL' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
             }`}>
-              Visual
+              {t('director.visual')}
             </div>
             <div className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
               gameState.currentPhase === 'SMELL' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
             }`}>
-              Smell
+              {t('director.smell')}
             </div>
             <div className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
               gameState.currentPhase === 'TASTE' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500'
             }`}>
-              Taste
+              {t('director.taste')}
             </div>
           </div>
           <p className="text-gray-600">
-            Current Phase: {gameState.currentPhase.charAt(0) + gameState.currentPhase.slice(1).toLowerCase()}
+            {t('director.currentPhase')}: {gameState.currentPhase.charAt(0) + gameState.currentPhase.slice(1).toLowerCase()}
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            Your score: {player.score} points
+            {t('game.yourScore', { score: player.score })}
           </p>
         </div>
 
@@ -318,10 +336,10 @@ function PlayerGameInterface({ player, gameState, submitAnswer, code }: { player
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold mb-2">
-                Guess the {gameState.currentPhase.toLowerCase()} characteristics
+                {t('game.guessCharacteristics', { phase: gameState.currentPhase.toLowerCase() })}
               </h2>
               <p className="text-gray-600 text-sm">
-                Match each characteristic with the wine it belongs to
+                {t('game.matchCharacteristics')}
               </p>
             </div>
 
@@ -368,6 +386,40 @@ function WineCharacteristicsGame({
   submissionState: 'idle' | 'submitting' | 'submitted'
   onSubmitAnswers: (answers: Record<string, string>) => void
 }) {
+  const { t } = useTranslation()
+
+  // Function to get translated characteristic label
+  const getCharacteristicLabel = (label: string): string => {
+    const labelMap: Record<string, string> = {
+      'Colour': t('game.colour'),
+      'Clarity': t('game.clarity'),
+      'Intensity': t('game.intensity'),
+      'Appearance': t('game.appearance'),
+      'Hue': t('game.hue'),
+      'Primary Aroma': t('game.primaryAroma'),
+      'Secondary Aroma': t('game.secondaryAroma'),
+      'Tertiary Aroma': t('game.tertiaryAroma'),
+      'Bouquet': t('game.bouquet'),
+      'Nose': t('game.nose'),
+      'Sweetness': t('game.sweetness'),
+      'Acidity': t('game.acidity'),
+      'Tannins': t('game.tannins'),
+      'Body': t('game.body'),
+      'Finish': t('game.finish'),
+    }
+    return labelMap[label] || label
+  }
+
+  // Function to translate characteristic value
+  const translateCharacteristic = (value: string): string => {
+    if (!value) return value
+    // First normalize to English (in case value is in Spanish/French from old games)
+    const normalizedValue = normalizeCharacteristicToEnglish(value)
+    // Then translate to current language
+    const translated = t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+    return translated
+  }
+
   const { categoryOptions, wineData, totalAnswersNeeded, categoryName, characteristicLabels } = useMemo(() => {
     if (!gameData?.wines || gameData.wines.length === 0) {
       return {
@@ -388,22 +440,22 @@ function WineCharacteristicsGame({
     switch (gameState.currentPhase) {
       case 'VISUAL':
         allCategoryOptions = VISUAL_CHARACTERISTICS
-        categoryName = 'Visual'
+        categoryName = 'visual'
         characteristicLabels = Object.keys(VISUAL_CHARACTERISTICS) as (keyof typeof VISUAL_CHARACTERISTICS)[]
         break
       case 'SMELL':
         allCategoryOptions = SMELL_CHARACTERISTICS
-        categoryName = 'Aroma'
+        categoryName = 'aroma'
         characteristicLabels = Object.keys(SMELL_CHARACTERISTICS) as (keyof typeof SMELL_CHARACTERISTICS)[]
         break
       case 'TASTE':
         allCategoryOptions = TASTE_CHARACTERISTICS
-        categoryName = 'Taste'
+        categoryName = 'tasteCategory'
         characteristicLabels = Object.keys(TASTE_CHARACTERISTICS) as (keyof typeof TASTE_CHARACTERISTICS)[]
         break
       default:
         allCategoryOptions = {}
-        categoryName = 'Characteristic'
+        categoryName = 'characteristic'
         characteristicLabels = []
     }
 
@@ -510,7 +562,7 @@ function WineCharacteristicsGame({
     return (
       <div className="bg-gray-50 p-4 rounded-lg">
         <p className="text-sm text-gray-600">
-          Loading wine characteristics...
+          {t('common.loading')}
         </p>
       </div>
     )
@@ -532,6 +584,7 @@ function WineCharacteristicsGame({
         const answerKey = `wine-${wine.wineNumber}-char-${index}`
         const selectedChar = answers[answerKey]
         if (selectedChar) {
+          // Don't translate - server expects "Wine N" format
           characteristicAnswers[selectedChar] = `Wine ${wine.wineNumber}`
         }
       })
@@ -548,16 +601,16 @@ function WineCharacteristicsGame({
       <div className="grid gap-4">
         <div className="bg-wine-50 p-4 rounded-lg">
           <h3 className="font-semibold text-wine-700 mb-2">
-            Instructions
+            {t('game.instructions')}
           </h3>
           <p className="text-sm text-wine-600">
-            Select the {categoryName.toLowerCase()} characteristics that match each wine. Each wine has specific {categoryName.toLowerCase()} characteristics you need to identify.
+            {t('game.selectCharacteristicsInstructions', { categoryName: t(`game.${categoryName}`) })}
           </p>
         </div>
 
         <div className="space-y-4">
           <h3 className="font-semibold text-gray-700">
-            Match characteristics to each wine:
+            {t('game.matchCharacteristics')}
           </h3>
 
           {wineData.map((wine) => (
@@ -566,12 +619,13 @@ function WineCharacteristicsGame({
               className="border rounded-lg p-4 bg-white space-y-3"
             >
               <h4 className="font-semibold text-lg text-wine-700">
-                Wine {wine.wineNumber}
+                {t('game.wineNumber', { number: wine.wineNumber })}
               </h4>
 
               <div className="space-y-2">
                 {wine.characteristics.map((_, characteristicIndex) => {
                   const label = characteristicLabels[characteristicIndex]
+                  const translatedLabel = getCharacteristicLabel(label)
                   const options = categoryOptions[label] || []
                   return (
                     <div
@@ -579,17 +633,17 @@ function WineCharacteristicsGame({
                       className="flex items-center gap-3"
                     >
                       <span className="text-sm text-gray-600 min-w-fit">
-                        {label || `${categoryName} ${characteristicIndex + 1}`}:
+                        {translatedLabel || `${categoryName} ${characteristicIndex + 1}`}:
                       </span>
                       <select
                         value={answers[`wine-${wine.wineNumber}-char-${characteristicIndex}`] || ''}
                         onChange={(e) => handleCharacteristicSelect(wine.wineNumber, characteristicIndex, e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-wine-500 focus:border-wine-500"
                       >
-                        <option value="">Select {categoryName.toLowerCase()}...</option>
+                        <option value="">{t('game.select', { categoryName: t(`game.${categoryName}`) })}</option>
                         {options.map((characteristic) => (
                           <option key={characteristic} value={characteristic}>
-                            {characteristic}
+                            {translateCharacteristic(characteristic)}
                           </option>
                         ))}
                       </select>
@@ -603,7 +657,7 @@ function WineCharacteristicsGame({
 
         <div className="bg-gray-50 p-3 rounded-lg">
           <p className="text-sm text-gray-600 text-center">
-            Progress: {answeredCount} of {totalAnswersNeeded} characteristics selected
+            {t('game.progress', { answered: answeredCount, total: totalAnswersNeeded })}
           </p>
         </div>
 
@@ -618,11 +672,11 @@ function WineCharacteristicsGame({
           }`}
         >
           {submissionState === 'submitted' ? (
-            'Answers Submitted ✓'
+            t('game.answersSubmitted')
           ) : submissionState === 'submitting' ? (
-            'Submitting...'
+            t('game.submitting')
           ) : (
-            `Submit Answers (${answeredCount}/${totalAnswersNeeded})`
+            t('game.submitAnswers', { answered: answeredCount, total: totalAnswersNeeded })
           )}
         </Button>
       </div>
@@ -631,10 +685,31 @@ function WineCharacteristicsGame({
 }
 
 function PlayerResults({ player, gameState, code }: { player: Player; gameState: GameState; code: string }) {
+  const { t } = useTranslation()
   const [results, setResults] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const retryCountRef = useRef(0)
+
+  // Function to translate wine characteristic values
+  const translateWineChar = (value: string | undefined): string => {
+    if (!value || value === '-') return '-'
+
+    // Handle comma-separated strings (shouldn't happen but defensive coding)
+    if (value.includes(',')) {
+      return value.split(',').map(v => {
+        const trimmed = v.trim()
+        const normalizedValue = normalizeCharacteristicToEnglish(trimmed)
+        return t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+      }).join(', ')
+    }
+
+    // First normalize to English (in case value is in Spanish/French from old games)
+    const normalizedValue = normalizeCharacteristicToEnglish(value)
+    // Then translate to current language
+    const translated = t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+    return translated
+  }
 
   useEffect(() => {
     const maxRetries = 10
@@ -654,7 +729,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
             setTimeout(fetchResults, 1500) // Retry after 1.5 seconds
             return
           }
-          throw new Error(data.error || 'Failed to fetch results')
+          throw new Error(data.error || t('errors.failedToCreateGame'))
         }
 
         console.log('Results fetched successfully:', data.results)
@@ -669,14 +744,14 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
     // Add initial delay to allow socket handler to complete
     setTimeout(fetchResults, 500)
-  }, [code])
+  }, [code, t])
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading Results...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </Card>
       </div>
     )
@@ -686,15 +761,19 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-2xl mx-auto">
+          <div className="absolute top-4 right-4">
+            <LanguageSwitcher />
+          </div>
+
           <div className="text-center mb-8">
             <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900">Game Finished!</h1>
-            <p className="text-gray-600 mt-2">Final Results</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('game.gameFinished')}</h1>
+            <p className="text-gray-600 mt-2">{t('game.finalResults')}</p>
           </div>
 
           <Card>
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-center">Final Scores</h3>
+              <h3 className="text-xl font-semibold text-center">{t('game.finalScores')}</h3>
               <div className="space-y-2">
                 {gameState.players
                   .sort((a, b) => b.score - a.score)
@@ -712,9 +791,9 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
                       <span className="font-medium">
                         {index === 0 && '🏆 '}
                         #{index + 1} {p.nickname}
-                        {p.id.startsWith('director-') && ' (Director)'}
+                        {p.id.startsWith('director-') && ` (${t('results.director')})`}
                       </span>
-                      <span className="font-bold text-lg">{p.score} points</span>
+                      <span className="font-bold text-lg">{p.score} {t('results.points')}</span>
                     </div>
                   ))}
               </div>
@@ -737,13 +816,13 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Game Finished!</h1>
-          <p className="text-gray-600 mt-2">Final Results</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('results.gameCompleted')}</h1>
+          <p className="text-gray-600 mt-2">{t('game.finalResults')}</p>
         </div>
 
         {/* Scores Summary */}
         <Card className="mb-8">
-          <h3 className="text-xl font-semibold text-center mb-4">Final Scores</h3>
+          <h3 className="text-xl font-semibold text-center mb-4">{t('results.finalScores')}</h3>
           <div className="space-y-2">
             {results.players
               .sort((a: any, b: any) => b.score - a.score)
@@ -762,7 +841,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
                     {index === 0 && '🏆 '}
                     #{index + 1} {p.nickname}
                   </span>
-                  <span className="font-bold text-lg">{p.score} points</span>
+                  <span className="font-bold text-lg">{p.score} {t('results.points')}</span>
                 </div>
               ))}
           </div>
@@ -776,7 +855,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                     <Wine className="h-6 w-6 mr-3" />
 
-                    Detailed Results
+                    {t('results.detailedResults')}
 
                   </h2>
 
@@ -788,13 +867,13 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                         <tr className="border-b-2 border-gray-300">
 
-                          <th className="text-left p-3 font-semibold bg-green-100">Facts (Correct Answers)</th>
+                          <th className="text-left p-3 font-semibold bg-green-100">{t('results.factsCorrectAnswers')}</th>
 
                           {/* Director column - only show if director exists */}
 
                           {results.players.find((p: any) => p.id && p.id.startsWith('director-')) && (
 
-                            <th className="text-left p-3 font-semibold bg-gray-100">Director</th>
+                            <th className="text-left p-3 font-semibold bg-gray-100">{t('results.director')}</th>
 
                           )}
 
@@ -834,11 +913,25 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                           const tasteChars = wine.characteristics?.taste || wine.characteristics?.TASTE || []
 
-        
+                          // Translate characteristics - handle both arrays and comma-separated strings
+                          const translateCharsList = (chars: any): string => {
+                            if (!chars) return ''
+                            if (Array.isArray(chars)) {
+                              return chars.map((c: string) => translateWineChar(c)).join(', ')
+                            }
+                            if (typeof chars === 'string' && chars.includes(',')) {
+                              return chars.split(',').map((c: string) => translateWineChar(c.trim())).join(', ')
+                            }
+                            return translateWineChar(chars)
+                          }
+
+                          const visualStr = translateCharsList(visualChars)
+                          const smellStr = translateCharsList(smellChars)
+                          const tasteStr = translateCharsList(tasteChars)
 
                           return (
 
-                            <>
+                            <Fragment key={wine.id}>
 
                               {/* Visual characteristic */}
 
@@ -846,7 +939,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                 <td className="p-3 bg-green-50 font-medium">
 
-                                  {wine.name} ({wine.year}) - Visual: {Array.isArray(visualChars) ? visualChars.join(', ') : visualChars}
+                                  {wine.name} ({wine.year}) - {t('director.visual')}: {visualStr}
 
                                 </td>
 
@@ -864,7 +957,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   }`}>
 
-                                    {directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'VISUAL')?.answer || '-'}
+                                    {translateWineChar(directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'VISUAL')?.answer)}
 
                                   </td>
 
@@ -878,7 +971,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   ) || { answer: '-', isCorrect: false }
 
-        
+
 
                                   return (
 
@@ -894,7 +987,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                     >
 
-                                      {wineAnswer.answer}
+                                      {translateWineChar(wineAnswer.answer)}
 
                                     </td>
 
@@ -910,7 +1003,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                 <td className="p-3 bg-green-50 font-medium">
 
-                                  {wine.name} ({wine.year}) - Smell: {Array.isArray(smellChars) ? smellChars.join(', ') : smellChars}
+                                  {wine.name} ({wine.year}) - {t('director.smell')}: {smellStr}
 
                                 </td>
 
@@ -928,7 +1021,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   }`}>
 
-                                    {directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'SMELL')?.answer || '-'}
+                                    {translateWineChar(directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'SMELL')?.answer)}
 
                                   </td>
 
@@ -942,7 +1035,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   ) || { answer: '-', isCorrect: false }
 
-        
+
 
                                   return (
 
@@ -958,7 +1051,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                     >
 
-                                      {wineAnswer.answer}
+                                      {translateWineChar(wineAnswer.answer)}
 
                                     </td>
 
@@ -974,7 +1067,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                 <td className="p-3 bg-green-50 font-medium">
 
-                                  {wine.name} ({wine.year}) - Taste: {Array.isArray(tasteChars) ? tasteChars.join(', ') : tasteChars}
+                                  {wine.name} ({wine.year}) - {t('director.taste')}: {tasteStr}
 
                                 </td>
 
@@ -992,7 +1085,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   }`}>
 
-                                    {directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'TASTE')?.answer || '-'}
+                                    {translateWineChar(directorPlayer.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'TASTE')?.answer)}
 
                                   </td>
 
@@ -1006,7 +1099,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                   ) || { answer: '-', isCorrect: false }
 
-        
+
 
                                   return (
 
@@ -1022,7 +1115,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                                     >
 
-                                      {wineAnswer.answer}
+                                      {translateWineChar(wineAnswer.answer)}
 
                                     </td>
 
@@ -1032,7 +1125,7 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
 
                               </tr>
 
-                            </>
+                            </Fragment>
 
                           )
 

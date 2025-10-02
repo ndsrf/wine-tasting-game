@@ -13,6 +13,7 @@ const createGameSchema = z.object({
       year: z.number().min(1900).max(new Date().getFullYear()),
     })
   ),
+  language: z.string().optional().default('en'),
 })
 
 export async function POST(request: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { difficulty, wineCount, wines } = createGameSchema.parse(body)
+    const { difficulty, wineCount, wines, language } = createGameSchema.parse(body)
 
     if (wines.length !== wineCount) {
       return NextResponse.json(
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const { wines: wineCharacteristics, similarityWarning } = await generateWineCharacteristics(wines, difficulty)
+    const { wines: wineCharacteristics, similarityWarning } = await generateWineCharacteristics(wines, difficulty, language)
 
     for (let i = 0; i < wineCharacteristics.length; i++) {
       const { wine, characteristics } = wineCharacteristics[i]

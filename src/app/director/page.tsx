@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Wine, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import { Difficulty } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
 import { authenticatedFetch } from '@/lib/auth-client'
+import '@/lib/i18n'
 
 interface WineEntry {
   name: string
@@ -17,6 +20,7 @@ interface WineEntry {
 
 export default function DirectorPage() {
   const router = useRouter()
+  const { t, ready: i18nReady, i18n } = useTranslation()
   const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth()
   const [difficulty, setDifficulty] = useState<Difficulty>('NOVICE')
   const [wineCount, setWineCount] = useState(3)
@@ -60,7 +64,7 @@ export default function DirectorPage() {
 
     const incompleteWines = wines.some(wine => !wine.name.trim())
     if (incompleteWines) {
-      setError('Please fill in all wine names')
+      setError(t('director.fillAllWineNames'))
       return
     }
 
@@ -75,6 +79,7 @@ export default function DirectorPage() {
           difficulty,
           wineCount,
           wines,
+          language: i18n.language || 'en',
         }),
       })
 
@@ -90,11 +95,11 @@ export default function DirectorPage() {
           // Unauthorized - redirect to login
           router.push('/auth/login?redirect=/director')
         } else {
-          setError(data.error || 'Failed to create game')
+          setError(data.error || t('errors.failedToCreateGame'))
         }
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('errors.tryAgain'))
     } finally {
       setLoading(false)
     }
@@ -111,12 +116,12 @@ export default function DirectorPage() {
   }
 
   // Show loading state until mounted and auth resolved
-  if (!mounted || authLoading) {
+  if (!mounted || authLoading || !i18nReady) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{i18nReady ? t('common.loading') : 'Loading...'}</h2>
         </div>
       </div>
     )
@@ -128,7 +133,7 @@ export default function DirectorPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Authenticating...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </div>
       </div>
     )
@@ -138,28 +143,31 @@ export default function DirectorPage() {
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-2xl mx-auto">
+          <div className="flex justify-end mb-4">
+            <LanguageSwitcher />
+          </div>
           <div className="text-center mb-8">
             <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900">Game Created!</h1>
-            <p className="text-gray-600 mt-2">Share this code with your players</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('director.gameCreated')}</h1>
+            <p className="text-gray-600 mt-2">{t('director.shareCode')}</p>
           </div>
 
           <Card className="text-center">
             <div className="bg-wine-50 rounded-lg p-6 mb-6">
-              <p className="text-sm text-gray-600 mb-2">Game Code:</p>
+              <p className="text-sm text-gray-600 mb-2">{t('director.gameCode')}</p>
               <p className="text-4xl font-bold tracking-widest text-wine-600">{gameCode}</p>
             </div>
 
             {similarityWarning && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-6 flex items-start">
                 <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                <p className="text-sm">{similarityWarning}</p>
+                <p className="text-sm">{t('director.similarityWarning')}</p>
               </div>
             )}
 
             <div className="space-y-4">
               <Button onClick={handleStartGame} className="w-full">
-                Start Game
+                {t('common.start')}
               </Button>
 
               <Button
@@ -170,7 +178,7 @@ export default function DirectorPage() {
                 }}
                 className="w-full"
               >
-                Create Another Game
+                {t('director.createAnotherGame')}
               </Button>
             </div>
           </Card>
@@ -182,10 +190,13 @@ export default function DirectorPage() {
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-2xl mx-auto">
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
         <div className="text-center mb-8">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Create New Game</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {user.username}!</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('director.createNewGame')}</h1>
+          <p className="text-gray-600 mt-2">{t('director.welcomeBack', { username: user.username })}</p>
         </div>
 
         <Card>
@@ -198,7 +209,7 @@ export default function DirectorPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Difficulty Level
+                {t('director.difficultyLevel')}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {(['NOVICE', 'INTERMEDIATE', 'SOMMELIER'] as Difficulty[]).map((level) => (
@@ -212,11 +223,11 @@ export default function DirectorPage() {
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="font-medium text-sm">{level}</div>
+                    <div className="font-medium text-sm">{t(`homepage.${level.toLowerCase()}`)}</div>
                     <div className="text-xs text-gray-500">
-                      {level === 'NOVICE' && '3 per category'}
-                      {level === 'INTERMEDIATE' && '5 per category'}
-                      {level === 'SOMMELIER' && '10 per category'}
+                      {level === 'NOVICE' && t('homepage.characteristicsPerCategory', { count: 3 })}
+                      {level === 'INTERMEDIATE' && t('homepage.characteristicsPerCategory', { count: 5 })}
+                      {level === 'SOMMELIER' && t('homepage.characteristicsPerCategory', { count: 10 })}
                     </div>
                   </button>
                 ))}
@@ -225,34 +236,55 @@ export default function DirectorPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Wines
+                {t('director.numberOfWines')}
               </label>
-              <Input
-                type="number"
-                min="1"
-                max="10"
-                value={wineCount}
-                onChange={(e) => setWineCount(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setWineCount(Math.max(1, wineCount - 1))}
+                  disabled={wineCount <= 1}
+                  className="px-4"
+                >
+                  -
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={wineCount}
+                  onChange={(e) => setWineCount(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                  className="text-center"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setWineCount(Math.min(10, wineCount + 1))}
+                  disabled={wineCount >= 10}
+                  className="px-4"
+                >
+                  +
+                </Button>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Wine Details
+                {t('director.wineDetails')}
               </label>
               <div className="space-y-3">
                 {wines.map((wine, index) => (
                   <div key={index} className="grid grid-cols-3 gap-2 items-end">
                     <div className="col-span-2">
                       <Input
-                        placeholder={`Wine ${index + 1} name`}
+                        placeholder={t('director.wineName', { number: index + 1 })}
                         value={wine.name}
                         onChange={(e) => updateWine(index, 'name', e.target.value)}
                       />
                     </div>
                     <Input
                       type="number"
-                      placeholder="Year"
+                      placeholder={t('director.year')}
                       min="1900"
                       max={new Date().getFullYear()}
                       value={wine.year}
@@ -269,7 +301,7 @@ export default function DirectorPage() {
               className="w-full"
               disabled={wines.some(wine => !wine.name.trim())}
             >
-              Create Game
+              {t('common.create')}
             </Button>
           </div>
         </Card>
@@ -279,7 +311,7 @@ export default function DirectorPage() {
             onClick={handleSignOut}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
-            Sign out
+            {t('navigation.signOut')}
           </button>
         </div>
       </div>

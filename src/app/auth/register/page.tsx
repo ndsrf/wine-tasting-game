@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Wine } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t, ready: i18nReady } = useTranslation()
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -23,13 +27,13 @@ export default function RegisterPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('auth.passwordsNoMatch'))
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
+      setError(t('auth.passwordTooShort'))
       setLoading(false)
       return
     }
@@ -50,25 +54,40 @@ export default function RegisterPage() {
         localStorage.setItem('user', JSON.stringify(data.user))
         router.push('/director')
       } else {
-        setError(data.error || 'Registration failed')
+        setError(data.error || t('auth.registrationFailed'))
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('errors.tryAgain'))
     } finally {
       setLoading(false)
     }
   }
 
+  if (!i18nReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center mb-6">
             <Wine className="h-8 w-8 text-wine-600 mr-3" />
-            <h1 className="text-3xl font-bold text-gradient">Wine Tasting Game</h1>
+            <h1 className="text-3xl font-bold text-gradient">{t('homepage.title')}</h1>
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900">Create Director Account</h2>
-          <p className="text-gray-600 mt-2">Sign up to create and manage wine tasting games</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('auth.createAccount')}</h2>
+          <p className="text-gray-600 mt-2">{t('auth.registerDescription')}</p>
         </div>
 
         <Card>
@@ -81,7 +100,7 @@ export default function RegisterPage() {
 
             <Input
               type="email"
-              label="Email"
+              label={t('auth.email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -90,7 +109,7 @@ export default function RegisterPage() {
 
             <Input
               type="text"
-              label="Username"
+              label={t('auth.username')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -101,7 +120,7 @@ export default function RegisterPage() {
 
             <Input
               type="password"
-              label="Password"
+              label={t('auth.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -111,7 +130,7 @@ export default function RegisterPage() {
 
             <Input
               type="password"
-              label="Confirm Password"
+              label={t('auth.confirmPassword')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -119,21 +138,21 @@ export default function RegisterPage() {
             />
 
             <Button type="submit" loading={loading} className="w-full">
-              Create Account
+              {t('auth.createAccount')}
             </Button>
           </form>
 
           <p className="text-center text-sm text-gray-600 mt-6">
-            Already have an account?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link href="/auth/login" className="text-wine-600 hover:text-wine-700 font-medium">
-              Sign in
+              {t('auth.signIn')}
             </Link>
           </p>
         </Card>
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-            ← Back to home
+            {t('auth.backToHome')}
           </Link>
         </div>
       </div>

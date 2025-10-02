@@ -11,12 +11,17 @@ import { GameState, CharacteristicType, Difficulty, GameStatus, Player } from '@
 import { VISUAL_CHARACTERISTICS, SMELL_CHARACTERISTICS, TASTE_CHARACTERISTICS } from '@/lib/wine-options'
 import { useAuth } from '@/hooks/useAuth'
 import { authenticatedFetch } from '@/lib/auth-client'
+import { useTranslation } from 'react-i18next'
+import '@/lib/i18n'
+import { normalizeCharacteristicToEnglish } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 function DirectorGamePageComponent() {
   const params = useParams()
   const router = useRouter()
   const code = params.code as string
   const { user, isLoading: authLoading, isAuthenticated } = useAuth()
+  const { t, ready: i18nReady } = useTranslation()
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [error, setError] = useState('')
   const [isStartingGame, setIsStartingGame] = useState(false)
@@ -329,12 +334,12 @@ function DirectorGamePageComponent() {
   }
 
   // Show loading state until mounted and auth resolved
-  if (!mounted || authLoading) {
+  if (!mounted || authLoading || !i18nReady) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </Card>
       </div>
     )
@@ -346,7 +351,7 @@ function DirectorGamePageComponent() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Authenticating...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </Card>
       </div>
     )
@@ -357,7 +362,7 @@ function DirectorGamePageComponent() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Connecting...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.connecting')}</h2>
         </Card>
       </div>
     )
@@ -367,10 +372,10 @@ function DirectorGamePageComponent() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">{t('common.error')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={() => router.push('/director')}>
-            Back to Director Dashboard
+            {t('director.backToDashboard')}
           </Button>
         </Card>
       </div>
@@ -382,7 +387,7 @@ function DirectorGamePageComponent() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading Game...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.loadingGame')}</h2>
         </Card>
       </div>
     )
@@ -391,26 +396,30 @@ function DirectorGamePageComponent() {
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         <div className="text-center mb-6">
           <Wine className="h-8 w-8 text-wine-600 mx-auto mb-2" />
-          <h1 className="text-3xl font-bold text-gray-900">Director Control Panel</h1>
-          <p className="text-gray-600">Game Code: <span className="font-bold tracking-wider">{code}</span></p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('director.controlPanel')}</h1>
+          <p className="text-gray-600">{t('game.gameCode', { code })}</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <Card>
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Users className="h-5 w-5 mr-2" />
-              Players ({gameState.players.length})
+              {t('director.players', { count: gameState.players.length })}
             </h2>
             <div className="space-y-2">
               {gameState.players.length === 0 ? (
-                <p className="text-gray-500 text-sm">No players joined yet</p>
+                <p className="text-gray-500 text-sm">{t('director.noPlayersJoined')}</p>
               ) : (
                 gameState.players.map((player) => (
                   <div key={player.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                     <span className="font-medium">{player.nickname}</span>
-                    <span className="text-sm text-gray-600">{player.score} pts</span>
+                    <span className="text-sm text-gray-600">{player.score} {t('director.points')}</span>
                   </div>
                 ))
               )}
@@ -418,19 +427,19 @@ function DirectorGamePageComponent() {
           </Card>
 
           <Card>
-            <h2 className="text-xl font-semibold mb-4">Game Status</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('director.gameStatus')}</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">Status:</span> {
+              <p><span className="font-medium">{t('director.status')}</span> {
                 gameState?.isGameStarted ? 'IN_PROGRESS' :
                 gameState?.isGameFinished ? 'FINISHED' :
                 gameState?.game?.status || 'CREATED'
               }</p>
-              <p key="difficulty"><span className="font-medium">Difficulty:</span> {gameState?.game?.difficulty || 'Loading...'}</p>
-              <p key="total-wines"><span className="font-medium">Total Wines:</span> {gameState?.game?.wineCount || 'Loading...'}</p>
+              <p key="difficulty"><span className="font-medium">{t('director.difficulty')}</span> {gameState?.game?.difficulty || t('common.loading')}</p>
+              <p key="total-wines"><span className="font-medium">{t('director.totalWines')}</span> {gameState?.game?.wineCount || t('common.loading')}</p>
               {gameState?.isGameStarted && (
                 <>
-                  <p key="current-wine"><span className="font-medium">Current Wine:</span> {gameState.currentWine}</p>
-                  <p key="current-phase"><span className="font-medium">Current Phase:</span> {gameState.currentPhase}</p>
+                  <p key="current-wine"><span className="font-medium">{t('director.currentWine')}</span> {gameState.currentWine}</p>
+                  <p key="current-phase"><span className="font-medium">{t('director.currentPhase')}</span> {gameState.currentPhase}</p>
                 </>
               )}
             </div>
@@ -439,9 +448,9 @@ function DirectorGamePageComponent() {
 
         {!gameState?.isGameStarted && (
           <Card className="text-center">
-            <h2 className="text-xl font-semibold mb-4">Ready to Start?</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('director.readyToStart')}</h2>
             <p className="text-gray-600 mb-6">
-              Make sure all players have joined before starting the game.
+              {t('director.startDescription')}
             </p>
             <Button
               onClick={handleStartGame}
@@ -450,7 +459,7 @@ function DirectorGamePageComponent() {
               loading={isStartingGame}
             >
               <Play className="h-4 w-4 mr-2" />
-              {isStartingGame ? 'Starting...' : 'Start Game'}
+              {isStartingGame ? t('common.loading') : t('common.start')}
             </Button>
           </Card>
         )}
@@ -458,10 +467,10 @@ function DirectorGamePageComponent() {
         {gameState?.isGameStarted && !gameState?.isGameFinished && (
           <>
             <Card>
-              <h2 className="text-xl font-semibold mb-4">Game Controls</h2>
+              <h2 className="text-xl font-semibold mb-4">{t('director.gameControls')}</h2>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium mb-2">Phase Controls</h3>
+                  <h3 className="font-medium mb-2">{t('director.phaseControls')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {(['VISUAL', 'SMELL', 'TASTE'] as CharacteristicType[]).map((phase) => (
                       <Button
@@ -470,7 +479,7 @@ function DirectorGamePageComponent() {
                         variant={gameState?.currentPhase === phase ? 'primary' : 'outline'}
                         size="sm"
                       >
-                        {phase.charAt(0) + phase.slice(1).toLowerCase()}
+                        {t(`director.${phase.toLowerCase()}`)}
                       </Button>
                     ))}
                   </div>
@@ -483,7 +492,7 @@ function DirectorGamePageComponent() {
                     disabled={!gameState?.game?.wineCount || gameState.currentWine >= gameState.game.wineCount}
                   >
                     <ArrowRight className="h-4 w-4 mr-2" />
-                    Next Wine
+                    {t('director.nextWine')}
                   </Button>
 
                   {gameState?.game?.wineCount && gameState.currentWine >= gameState.game.wineCount && (
@@ -493,7 +502,7 @@ function DirectorGamePageComponent() {
                       className="inline-flex items-center"
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
-                      Finish Game
+                      {t('director.finishGame')}
                     </Button>
                   )}
                 </div>
@@ -503,13 +512,13 @@ function DirectorGamePageComponent() {
             {showDirectorGameplay && gameData && (
               <Card>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Director Gameplay</h2>
+                  <h2 className="text-xl font-semibold">{t('director.directorGameplay')}</h2>
                   <Button
                     onClick={() => setShowDirectorGameplay(!showDirectorGameplay)}
                     variant="ghost"
                     size="sm"
                   >
-                    {showDirectorGameplay ? 'Hide' : 'Show'}
+                    {showDirectorGameplay ? t('director.hide') : t('director.show')}
                   </Button>
                 </div>
                 <DirectorGameplayMatrix
@@ -542,7 +551,7 @@ function DirectorGamePageComponent() {
               }
             }}
           >
-            Back to Dashboard
+            {t('director.backToDashboard')}
           </Button>
         </div>
 
@@ -607,10 +616,31 @@ function DirectorGamePageComponent() {
 }
 
 function DirectorResults({ gameState, code }: { gameState: GameState; code: string }) {
+  const { t } = useTranslation()
   const [results, setResults] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const retryCountRef = useRef(0)
+
+  // Function to translate wine characteristic values
+  const translateWineChar = (value: string | undefined): string => {
+    if (!value || value === '-') return '-'
+
+    // Handle comma-separated strings (shouldn't happen but defensive coding)
+    if (value.includes(',')) {
+      return value.split(',').map(v => {
+        const trimmed = v.trim()
+        const normalizedValue = normalizeCharacteristicToEnglish(trimmed)
+        return t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+      }).join(', ')
+    }
+
+    // First normalize to English (in case value is in Spanish/French from old games)
+    const normalizedValue = normalizeCharacteristicToEnglish(value)
+    // Then translate to current language
+    const translated = t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+    return translated
+  }
 
   useEffect(() => {
     const maxRetries = 10
@@ -630,7 +660,7 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
             setTimeout(fetchResults, 1500) // Retry after 1.5 seconds
             return
           }
-          throw new Error(data.error || 'Failed to fetch results')
+          throw new Error(data.error || t('errors.failedToCreateGame'))
         }
 
         console.log('Results fetched successfully:', data.results)
@@ -645,14 +675,14 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
 
     // Add initial delay to allow socket handler to complete
     setTimeout(fetchResults, 500)
-  }, [code])
+  }, [code, t])
 
   if (isLoading) {
     return (
       <Card>
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4 animate-pulse" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading Results...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </div>
       </Card>
     )
@@ -663,12 +693,12 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
       <Card>
         <div className="text-center mb-6">
           <Trophy className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Game Completed!</h2>
-          <p className="text-gray-600">Here are the final results</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('director.gameCompleted')}</h2>
+          <p className="text-gray-600">{t('director.gameEndedDescription')}</p>
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-center">Final Scores</h3>
+          <h3 className="text-xl font-semibold text-center">{t('results.finalScores')}</h3>
           <div className="space-y-2">
             {gameState.players
               .sort((a, b) => b.score - a.score)
@@ -684,9 +714,9 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
                   <span className="font-medium">
                     {index === 0 && '🏆 '}
                     #{index + 1} {p.nickname}
-                    {p.id.startsWith('director-') && ' (Director)'}
+                    {p.id.startsWith('director-') && ` (${t('results.director')})`}
                   </span>
-                  <span className="font-bold text-lg">{p.score} points</span>
+                  <span className="font-bold text-lg">{p.score} {t('results.points')}</span>
                 </div>
               ))}
           </div>
@@ -706,10 +736,10 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
       <Card className="mb-6">
         <div className="text-center mb-6">
           <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900">Game Completed!</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('results.gameCompleted')}</h2>
         </div>
 
-        <h3 className="text-xl font-semibold text-center mb-4">Final Scores</h3>
+        <h3 className="text-xl font-semibold text-center mb-4">{t('results.finalScores')}</h3>
         <div className="space-y-2">
           {results.players
             .sort((a: any, b: any) => b.score - a.score)
@@ -726,7 +756,7 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
                   {index === 0 && '🏆 '}
                   #{index + 1} {p.nickname}
                 </span>
-                <span className="font-bold text-lg">{p.score} points</span>
+                <span className="font-bold text-lg">{p.score} {t('results.points')}</span>
               </div>
             ))}
         </div>
@@ -736,15 +766,15 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
       <Card>
         <h2 className="text-2xl font-semibold mb-4 flex items-center">
           <Wine className="h-6 w-6 mr-3" />
-          Detailed Results
+          {t('results.detailedResults')}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b-2 border-gray-300">
-                <th className="text-left p-3 font-semibold bg-green-100">Wine</th>
-                <th className="text-left p-3 font-semibold bg-green-100">Characteristics (Correct Answers)</th>
-                <th className="text-left p-3 font-semibold bg-gray-100">Director</th>
+                <th className="text-left p-3 font-semibold bg-green-100">{t('results.wineLabel')}</th>
+                <th className="text-left p-3 font-semibold bg-green-100">{t('results.characteristicsCorrectAnswers')}</th>
+                <th className="text-left p-3 font-semibold bg-gray-100">{t('results.director')}</th>
                 {results.players.filter((p: any) => !p.id || !p.id.startsWith('director-')).map((p: any) => (
                   <th key={p.nickname} className="text-left p-3 font-semibold bg-gray-50">
                     {p.nickname}
@@ -763,10 +793,21 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
                 const smellChars = wine.characteristics?.smell || wine.characteristics?.SMELL || []
                 const tasteChars = wine.characteristics?.taste || wine.characteristics?.TASTE || []
 
-                // Format characteristics as comma-separated list
-                const visualStr = Array.isArray(visualChars) ? visualChars.join(', ') : visualChars
-                const smellStr = Array.isArray(smellChars) ? smellChars.join(', ') : smellChars
-                const tasteStr = Array.isArray(tasteChars) ? tasteChars.join(', ') : tasteChars
+                // Translate and format characteristics - handle both arrays and comma-separated strings
+                const translateCharsList = (chars: any): string => {
+                  if (!chars) return ''
+                  if (Array.isArray(chars)) {
+                    return chars.map((c: string) => translateWineChar(c)).join(', ')
+                  }
+                  if (typeof chars === 'string' && chars.includes(',')) {
+                    return chars.split(',').map((c: string) => translateWineChar(c.trim())).join(', ')
+                  }
+                  return translateWineChar(chars)
+                }
+
+                const visualStr = translateCharsList(visualChars)
+                const smellStr = translateCharsList(smellChars)
+                const tasteStr = translateCharsList(tasteChars)
 
                 // Get all player answers for this wine
                 const directorVisualAnswer = directorPlayer?.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'VISUAL')
@@ -781,14 +822,14 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
                       {wine.name} ({wine.year})
                     </td>
                     <td className="p-3 bg-green-50 font-medium">
-                      <div><strong>Visual:</strong> {visualStr}</div>
-                      <div><strong>Smell:</strong> {smellStr}</div>
-                      <div><strong>Taste:</strong> {tasteStr}</div>
+                      <div><strong>{t('director.visual')}:</strong> {visualStr}</div>
+                      <div><strong>{t('director.smell')}:</strong> {smellStr}</div>
+                      <div><strong>{t('director.taste')}:</strong> {tasteStr}</div>
                     </td>
                     <td className={`p-3 ${hasDirectorCorrect ? 'bg-green-100' : ''}`}>
-                      <div><strong>Visual:</strong> {directorVisualAnswer?.answer || '-'}</div>
-                      <div><strong>Smell:</strong> {directorSmellAnswer?.answer || '-'}</div>
-                      <div><strong>Taste:</strong> {directorTasteAnswer?.answer || '-'}</div>
+                      <div><strong>{t('director.visual')}:</strong> {translateWineChar(directorVisualAnswer?.answer)}</div>
+                      <div><strong>{t('director.smell')}:</strong> {translateWineChar(directorSmellAnswer?.answer)}</div>
+                      <div><strong>{t('director.taste')}:</strong> {translateWineChar(directorTasteAnswer?.answer)}</div>
                     </td>
                     {regularPlayers.map((p: any) => {
                       const visualAnswer = p.answers.find((a: any) => a.wineId === wine.id && a.characteristicType === 'VISUAL')
@@ -802,9 +843,9 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
                           key={p.nickname}
                           className={`p-3 ${hasCorrect ? 'bg-green-100 font-semibold' : ''}`}
                         >
-                          <div><strong>Visual:</strong> {visualAnswer?.answer || '-'}</div>
-                          <div><strong>Smell:</strong> {smellAnswer?.answer || '-'}</div>
-                          <div><strong>Taste:</strong> {tasteAnswer?.answer || '-'}</div>
+                          <div><strong>{t('director.visual')}:</strong> {translateWineChar(visualAnswer?.answer)}</div>
+                          <div><strong>{t('director.smell')}:</strong> {translateWineChar(smellAnswer?.answer)}</div>
+                          <div><strong>{t('director.taste')}:</strong> {translateWineChar(tasteAnswer?.answer)}</div>
                         </td>
                       )
                     })}
@@ -834,6 +875,40 @@ function DirectorGameplayMatrix({
   onSubmitAnswers?: (answers: Record<string, string>) => void
   submissionState: 'idle' | 'submitting' | 'submitted'
 }) {
+  const { t } = useTranslation()
+
+  // Function to get translated characteristic label
+  const getCharacteristicLabel = (label: string): string => {
+    const labelMap: Record<string, string> = {
+      'Colour': t('game.colour'),
+      'Clarity': t('game.clarity'),
+      'Intensity': t('game.intensity'),
+      'Appearance': t('game.appearance'),
+      'Hue': t('game.hue'),
+      'Primary Aroma': t('game.primaryAroma'),
+      'Secondary Aroma': t('game.secondaryAroma'),
+      'Tertiary Aroma': t('game.tertiaryAroma'),
+      'Bouquet': t('game.bouquet'),
+      'Nose': t('game.nose'),
+      'Sweetness': t('game.sweetness'),
+      'Acidity': t('game.acidity'),
+      'Tannins': t('game.tannins'),
+      'Body': t('game.body'),
+      'Finish': t('game.finish'),
+    }
+    return labelMap[label] || label
+  }
+
+  // Function to translate characteristic value
+  const translateCharacteristic = (value: string): string => {
+    if (!value) return value
+    // First normalize to English (in case value is in Spanish/French from old games)
+    const normalizedValue = normalizeCharacteristicToEnglish(value)
+    // Then translate to current language
+    const translated = t(`game.wineChar_${normalizedValue}`, { defaultValue: normalizedValue })
+    return translated
+  }
+
   const { categoryOptions, wineData, categoryName, characteristicLabels } = useMemo(() => {
     if (!gameData?.wines || gameData.wines.length === 0) {
       return {
@@ -853,22 +928,22 @@ function DirectorGameplayMatrix({
     switch (gameState.currentPhase) {
       case 'VISUAL':
         allCategoryOptions = VISUAL_CHARACTERISTICS
-        categoryName = 'Visual'
+        categoryName = 'visual'
         characteristicLabels = Object.keys(VISUAL_CHARACTERISTICS) as (keyof typeof VISUAL_CHARACTERISTICS)[]
         break
       case 'SMELL':
         allCategoryOptions = SMELL_CHARACTERISTICS
-        categoryName = 'Aroma'
+        categoryName = 'aroma'
         characteristicLabels = Object.keys(SMELL_CHARACTERISTICS) as (keyof typeof SMELL_CHARACTERISTICS)[]
         break
       case 'TASTE':
         allCategoryOptions = TASTE_CHARACTERISTICS
-        categoryName = 'Taste'
+        categoryName = 'tasteCategory'
         characteristicLabels = Object.keys(TASTE_CHARACTERISTICS) as (keyof typeof TASTE_CHARACTERISTICS)[]
         break
       default:
         allCategoryOptions = {}
-        categoryName = 'Characteristic'
+        categoryName = 'characteristic'
         characteristicLabels = []
     }
 
@@ -1004,10 +1079,10 @@ function DirectorGameplayMatrix({
     <div className="space-y-4">
       <div className="bg-wine-50 p-4 rounded-lg">
         <h3 className="font-semibold text-wine-700 mb-2">
-          Director Playing - {categoryName} Phase
+          {t('director.directorPlaying', { categoryName: t(`game.${categoryName}`) })}
         </h3>
         <p className="text-sm text-wine-600">
-          Wine {gameState.currentWine}: Select the {categoryName.toLowerCase()} characteristics that match each wine.
+          {t('director.selectCharacteristics', { wineNumber: `${t('game.wineNumber', { number: gameState.currentWine })}`, categoryName: t(`game.${categoryName}`) })}
         </p>
       </div>
 
@@ -1018,12 +1093,13 @@ function DirectorGameplayMatrix({
             className="border rounded-lg p-4 bg-white space-y-3"
           >
             <h4 className="font-semibold text-lg text-wine-700">
-              Wine {wine.wineNumber}
+              {t('game.wineNumber', { number: wine.wineNumber })}
             </h4>
 
             <div className="space-y-2">
               {wine.characteristics.map((_, characteristicIndex) => {
                 const label = characteristicLabels[characteristicIndex]
+                const translatedLabel = getCharacteristicLabel(label)
                 const options = categoryOptions[label] || []
                 return (
                   <div
@@ -1031,17 +1107,17 @@ function DirectorGameplayMatrix({
                     className="flex items-center gap-3"
                   >
                     <span className="text-sm text-gray-600 min-w-fit">
-                      {label || `${categoryName} ${characteristicIndex + 1}`}:
+                      {translatedLabel || `${categoryName} ${characteristicIndex + 1}`}:
                     </span>
                     <select
                       value={answers[`wine-${wine.wineNumber}-char-${characteristicIndex}`] || ''}
                       onChange={(e) => handleCharacteristicSelect(wine.wineNumber, characteristicIndex, e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-wine-500 focus:border-wine-500"
                     >
-                      <option value="">Select {categoryName.toLowerCase()}...</option>
+                      <option value="">{t('game.select', { categoryName: t(`game.${categoryName}`) })}</option>
                       {options.map((characteristic) => (
                         <option key={characteristic} value={characteristic}>
-                          {characteristic}
+                          {translateCharacteristic(characteristic)}
                         </option>
                       ))}
                     </select>
@@ -1056,7 +1132,7 @@ function DirectorGameplayMatrix({
       <div className="space-y-3">
         <div className="bg-gray-50 p-3 rounded-lg">
           <p className="text-sm text-gray-600 text-center">
-            Progress: {answeredCount} of {totalAnswersNeeded} characteristics selected
+            {t('director.progress', { answered: answeredCount, total: totalAnswersNeeded })}
           </p>
         </div>
 
@@ -1071,17 +1147,17 @@ function DirectorGameplayMatrix({
           }`}
         >
           {submissionState === 'submitted' ? (
-            'Answers Submitted ✓'
+            t('director.answersSubmitted')
           ) : submissionState === 'submitting' ? (
-            'Submitting...'
+            t('director.submitting')
           ) : (
-            `Submit Director Answers (${answeredCount}/${totalAnswersNeeded})`
+            t('director.submitDirectorAnswers', { answered: answeredCount, total: totalAnswersNeeded })
           )}
         </Button>
 
         <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
           <p className="text-sm text-blue-700">
-            <strong>Director Mode:</strong> Your answers will be submitted just like players, so you can play along and see how you score!
+            <strong>{t('director.directorMode')}</strong>
           </p>
         </div>
       </div>

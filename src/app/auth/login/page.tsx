@@ -9,11 +9,15 @@ import { Input } from '@/components/ui/Input'
 import { Wine } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google'
+import { useTranslation } from 'react-i18next'
+import '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login, handleGoogleSuccess, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { t, ready: i18nReady } = useTranslation()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -45,10 +49,10 @@ function LoginPageContent() {
       if (result.success) {
         router.push(redirectPath)
       } else {
-        setError(result.error || 'Login failed')
+        setError(result.error || t('auth.loginFailed'))
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('errors.tryAgain'))
     } finally {
       setLoading(false)
     }
@@ -62,22 +66,22 @@ function LoginPageContent() {
       if (result.success) {
         router.push(redirectPath)
       } else {
-        setError(result.error || 'Google login failed')
+        setError(result.error || t('auth.loginFailed'))
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('errors.tryAgain'))
     } finally {
       setLoading(false)
     }
   }
 
   // Show loading state until mounted (prevents hydration mismatch)
-  if (!mounted || authLoading) {
+  if (!mounted || authLoading || !i18nReady) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </div>
       </div>
     )
@@ -89,7 +93,7 @@ function LoginPageContent() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Redirecting...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </div>
       </div>
     )
@@ -98,13 +102,17 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center mb-6">
             <Wine className="h-8 w-8 text-wine-600 mr-3" />
-            <h1 className="text-3xl font-bold text-gradient">Wine Tasting Game</h1>
+            <h1 className="text-3xl font-bold text-gradient">{t('homepage.title')}</h1>
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900">Director Login</h2>
-          <p className="text-gray-600 mt-2">Sign in to create and manage wine tasting games</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('auth.directorLogin')}</h2>
+          <p className="text-gray-600 mt-2">{t('auth.loginDescription')}</p>
           {redirectPath !== '/director' && (
             <p className="text-sm text-wine-600 mt-1">
               You&apos;ll be redirected to your requested page after login
@@ -122,7 +130,7 @@ function LoginPageContent() {
 
             <Input
               type="email"
-              label="Email"
+              label={t('auth.email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -131,7 +139,7 @@ function LoginPageContent() {
 
             <Input
               type="password"
-              label="Password"
+              label={t('auth.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -139,7 +147,7 @@ function LoginPageContent() {
             />
 
             <Button type="submit" loading={loading} className="w-full">
-              Sign In
+              {t('auth.signIn')}
             </Button>
           </form>
 
@@ -149,7 +157,7 @@ function LoginPageContent() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">{t('auth.continueWith')}</span>
               </div>
             </div>
 
@@ -157,23 +165,23 @@ function LoginPageContent() {
               <GoogleLogin
                 onSuccess={onGoogleLoginSuccess}
                 onError={() => {
-                  setError('Google login failed. Please try again.')
+                  setError(t('auth.loginFailed'))
                 }}
               />
             </div>
           </div>
 
           <p className="text-center text-sm text-gray-600 mt-6">
-            Don&apos;t have an account?{' '}
+            {t('auth.dontHaveAccount')}{' '}
             <Link href="/auth/register" className="text-wine-600 hover:text-wine-700 font-medium">
-              Sign up
+              {t('auth.signUp')}
             </Link>
           </p>
         </Card>
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-            ← Back to home
+            {t('auth.backToHome')}
           </Link>
         </div>
       </div>
@@ -182,12 +190,14 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation()
+
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Loading...</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
         </div>
       </div>
     }>

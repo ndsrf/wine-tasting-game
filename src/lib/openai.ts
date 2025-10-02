@@ -15,7 +15,8 @@ const CHARACTERISTIC_COUNTS = {
 
 export async function generateWineCharacteristics(
   wines: WineInfo[],
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  language: string = 'en'
 ): Promise<{ wines: Array<{ wine: WineInfo; characteristics: WineCharacteristics }>, similarityWarning?: string }> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -26,13 +27,17 @@ export async function generateWineCharacteristics(
   try {
     const wineDescriptions = wines.map(wine => `${wine.name} (${wine.year})`).join(', ')
 
-    const prompt = `You are a sommelier expert. For each of these wines: ${wineDescriptions}
+    const prompt = `You are a sommelier expert. Respond in English only.
+
+For each of these wines: ${wineDescriptions}
 
 Generate exactly ${characteristicCount} characteristics for each category (visual, smell, taste) for each wine.
 
 Visual characteristics should be selected from: ${VISUAL_OPTIONS.join(', ')}
 Smell characteristics should be selected from: ${SMELL_OPTIONS.join(', ')}
 Taste characteristics should be selected from: ${TASTE_OPTIONS.join(', ')}
+
+IMPORTANT: All characteristic names MUST be in English exactly as they appear in the lists above, regardless of the user's language preference. The application will handle translation.
 
 Make sure the characteristics are realistic for each wine type and vintage. Ensure there are meaningful differences between wines to make the guessing game challenging but fair.
 
@@ -56,7 +61,7 @@ Return the response in this exact JSON format:
       messages: [
         {
           role: 'system',
-          content: 'You are a professional sommelier with deep knowledge of wine characteristics. Always respond with valid JSON only.',
+          content: `You are a professional sommelier with deep knowledge of wine characteristics. Respond in English only. Always respond with valid JSON only.`,
         },
         {
           role: 'user',
