@@ -150,3 +150,177 @@ function checkSimilarity(characteristics: WineCharacteristics[]): string | undef
 
   return undefined
 }
+
+export async function generateWineExplanations(
+  wines: Array<{ name: string; year: number; characteristics: WineCharacteristics }>,
+  language: string = 'en'
+): Promise<Record<string, { visual: string; smell: string; taste: string }>> {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  try {
+    const wineDescriptions = wines.map((wine, index) =>
+      `Wine ${index + 1}: ${wine.name} (${wine.year})\n` +
+      `Visual: ${wine.characteristics.visual.join(', ')}\n` +
+      `Smell: ${wine.characteristics.smell.join(', ')}\n` +
+      `Taste: ${wine.characteristics.taste.join(', ')}`
+    ).join('\n\n')
+
+    const languageNames: Record<string, string> = {
+      en: 'English',
+      es: 'Spanish',
+      fr: 'French',
+      de: 'German'
+    }
+
+    const targetLanguage = languageNames[language] || 'English'
+
+    const prompt = `You are a sommelier expert. For each wine listed below, provide educational explanations for why each characteristic (visual, smell, taste) is correct for that specific wine.
+
+Wines:
+${wineDescriptions}
+
+For each wine, explain:
+1. Visual characteristics: Why does this wine have these visual properties? Consider the grape variety, age, winemaking process, etc.
+2. Smell characteristics: Why does this wine have these aromatic properties? Explain the origin of these aromas.
+3. Taste characteristics: Why does this wine have these taste properties? Explain how the characteristics relate to the wine's origin, production, and composition.
+
+IMPORTANT: Respond in ${targetLanguage} language.
+
+Return the response in this exact JSON format:
+{
+  "Wine 1": {
+    "visual": "Explanation for visual characteristics...",
+    "smell": "Explanation for smell characteristics...",
+    "taste": "Explanation for taste characteristics..."
+  },
+  "Wine 2": {
+    "visual": "Explanation for visual characteristics...",
+    "smell": "Explanation for smell characteristics...",
+    "taste": "Explanation for taste characteristics..."
+  }
+}
+
+Keep each explanation concise (4-5 sentences) but informative.`
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional sommelier providing educational explanations about wine characteristics. Respond in ${targetLanguage}. Always respond with valid JSON only.`,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    })
+
+    const content = response.choices[0]?.message?.content
+    if (!content) {
+      throw new Error('No response from OpenAI')
+    }
+
+    const explanations = JSON.parse(content)
+    return explanations
+  } catch (error) {
+    console.error('OpenAI API error for explanations:', error)
+
+    // Return fallback explanations
+    const fallbackExplanations: Record<string, { visual: string; smell: string; taste: string }> = {}
+    wines.forEach((wine, index) => {
+      const wineKey = `Wine ${index + 1}`
+      fallbackExplanations[wineKey] = {
+        visual: `The visual characteristics of ${wine.name} (${wine.year}) are typical for this type of wine.`,
+        smell: `The aromatic profile of ${wine.name} (${wine.year}) reflects its grape variety and winemaking process.`,
+        taste: `The taste characteristics of ${wine.name} (${wine.year}) are influenced by its terroir and aging.`
+      }
+    })
+
+    return fallbackExplanations
+  }
+}
+
+export async function generateHint(
+  wineName: string,
+  wineYear: number,
+  phase: 'VISUAL' | 'SMELL' | 'TASTE',
+  correctCharacteristics: string[],
+  allOptions: string[],
+  language: string = 'en'
+): Promise<string> {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  try {
+    const languageNames: Record<string, string> = {
+      en: 'English',
+      es: 'Spanish',
+      fr: 'French',
+      de: 'German'
+    }
+
+    const targetLanguage = languageNames[language] || 'English'
+    const phaseNames = {
+      VISUAL: 'visual',
+      SMELL: 'smell/aroma',
+      TASTE: 'taste'
+    }
+
+    const prompt = `You are a sommelier helping a student learn about wine tasting. A student is trying to identify the ${phaseNames[phase]} characteristics of a wine (${wineYear}).
+
+The available options are: ${allOptions.join(', ')}
+
+Without revealing the exact answers, provide an educational hint (1-2 sentences) that helps the student understand what to look for in this wine's ${phaseNames[phase]} characteristics. Focus on general properties of this type of wine, its grape variety, region, or age that would guide them toward the correct characteristics.
+
+IMPORTANT:
+- Do NOT mention the wine's name - just say "this wine"
+- Do NOT mention the specific correct characteristics directly
+- Do NOT say things like "look for X, Y, and Z" where X, Y, Z are the exact answers
+- Instead, describe general qualities or what to expect from this wine type
+- Respond in ${targetLanguage} language
+
+Example good hint: "This wine from 2015 typically shows characteristics associated with mature wines that have undergone oak aging."
+Example bad hint: "Look for Ruby red, Oak, and Medium-bodied." (too specific)
+Example bad hint: "Château Margaux typically shows..." (mentions wine name)`
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a helpful sommelier providing educational hints without giving away answers. Respond in ${targetLanguage}.`,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 150,
+    })
+
+    const hint = response.choices[0]?.message?.content
+    if (!hint) {
+      throw new Error('No hint generated')
+    }
+
+    return hint.trim()
+  } catch (error) {
+    console.error('OpenAI API error for hint generation:', error)
+
+    // Return fallback hint based on phase
+    const fallbackHints: Record<string, string> = {
+      VISUAL: `Consider what the appearance of this wine tells you about its age and type.`,
+      SMELL: `Think about the typical aromas you'd find in this wine based on its grape variety and production.`,
+      TASTE: `Consider the body, acidity, and flavor profile typical of this wine.`
+    }
+
+    return fallbackHints[phase] || `Think about the typical characteristics of this wine.`
+  }
+}

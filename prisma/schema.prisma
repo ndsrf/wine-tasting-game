@@ -76,6 +76,7 @@ model Answer {
   characteristicType CharacteristicType
   answer           String
   isCorrect        Boolean
+  hintsUsed        Int               @default(0)
   createdAt        DateTime          @default(now())
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)

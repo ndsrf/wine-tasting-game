@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import redis from '@/lib/redis'
+import { generateWineExplanations } from '@/lib/openai'
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +9,8 @@ export async function GET(
 ) {
   try {
     const code = params.code
+    const { searchParams } = new URL(request.url)
+    const language = searchParams.get('language') || 'en'
 
     const game = await prisma.game.findUnique({
       where: { code },
@@ -59,16 +62,31 @@ export async function GET(
     console.log(`[Results API] Game ${code} is finished, returning results`)
     console.log(`[Results API] Found ${game.players.length} players:`, game.players.map(p => ({ id: p.id, nickname: p.nickname, answerCount: p.answers.length })))
 
+    // Generate explanations using OpenAI
+    let explanations: Record<string, { visual: string; smell: string; taste: string }> = {}
+    try {
+      const winesForExplanation = game.wines.map(wine => ({
+        name: wine.name,
+        year: wine.year,
+        characteristics: wine.characteristics as any
+      }))
+      explanations = await generateWineExplanations(winesForExplanation, language)
+    } catch (error) {
+      console.error('Failed to generate explanations:', error)
+    }
+
     const results = {
       players: game.players.map(player => ({
         id: player.id,
         nickname: player.nickname,
         score: player.score,
+        totalHintsUsed: player.answers.reduce((sum, answer) => sum + (answer.hintsUsed || 0), 0),
         answers: player.answers.map(answer => ({
           wineId: answer.wineId,
           characteristicType: answer.characteristicType,
           answer: answer.answer,
           isCorrect: answer.isCorrect,
+          hintsUsed: answer.hintsUsed || 0,
         })),
       })),
       wines: game.wines.map(wine => ({
@@ -82,6 +100,7 @@ export async function GET(
         acc[wine.id] = wine.characteristics as any
         return acc
       }, {} as Record<string, any>),
+      explanations,
     }
 
     return NextResponse.json({ results })

@@ -185,6 +185,10 @@ const resources = {
         tannins: 'Tannins',
         body: 'Body',
         finish: 'Finish',
+        needHelp: 'Need Help?',
+        hintDescription: 'Get an educational hint to guide you toward the right characteristics.',
+        getHint: 'Give me a hint',
+        hint: 'Hint',
         // Wine characteristic values - using flat structure with prefixed keys
         'wineChar_Ruby red': 'Ruby red',
         'wineChar_Garnet': 'Garnet',
@@ -379,6 +383,8 @@ const resources = {
         factsCorrectAnswers: 'Facts (Correct Answers)',
         winesTasted: 'Wines Tasted',
         searchOnWineSearcher: 'Search on Wine-Searcher',
+        wineExplanations: 'Wine Explanations',
+        hintsUsed: 'hints used',
       },
       errors: {
         unauthorized: 'Unauthorized',
@@ -580,6 +586,10 @@ const resources = {
         tannins: 'Taninos',
         body: 'Cuerpo',
         finish: 'Final',
+        needHelp: '¿Necesitas Ayuda?',
+        hintDescription: 'Obtén una pista educativa para guiarte hacia las características correctas.',
+        getHint: 'Dame una pista',
+        hint: 'Pista',
         // Wine characteristic values - using flat structure with prefixed keys
         'wineChar_Ruby red': 'Rojo rubí',
         'wineChar_Garnet': 'Granate',
@@ -777,6 +787,8 @@ const resources = {
         factsCorrectAnswers: 'Datos (Respuestas Correctas)',
         winesTasted: 'Vinos Catados',
         searchOnWineSearcher: 'Buscar en Wine-Searcher',
+        wineExplanations: 'Explicaciones del Vino',
+        hintsUsed: 'pistas usadas',
       },
       errors: {
         unauthorized: 'No autorizado',
@@ -978,6 +990,10 @@ const resources = {
         tannins: 'Tanins',
         body: 'Corps',
         finish: 'Finale',
+        needHelp: 'Besoin d\'Aide?',
+        hintDescription: 'Obtenez un indice éducatif pour vous guider vers les bonnes caractéristiques.',
+        getHint: 'Donnez-moi un indice',
+        hint: 'Indice',
         // Wine characteristic values - using flat structure with prefixed keys
         'wineChar_Ruby red': 'Rouge rubis',
         'wineChar_Garnet': 'Grenat',
@@ -1171,6 +1187,8 @@ const resources = {
         factsCorrectAnswers: 'Faits (Réponses Correctes)',
         winesTasted: 'Vins Dégustés',
         searchOnWineSearcher: 'Rechercher sur Wine-Searcher',
+        wineExplanations: 'Explications du Vin',
+        hintsUsed: 'indices utilisés',
       },
       errors: {
         unauthorized: 'Non autorisé',

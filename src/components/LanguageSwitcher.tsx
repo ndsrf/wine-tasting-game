@@ -11,15 +11,32 @@ const languages = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
 ]
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  locked?: boolean
+}
+
+export function LanguageSwitcher({ locked = false }: LanguageSwitcherProps) {
   const { i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
 
   const handleLanguageChange = (languageCode: string) => {
+    if (locked) return
     i18n.changeLanguage(languageCode)
     setIsOpen(false)
+  }
+
+  if (locked) {
+    return (
+      <div className="relative">
+        <div className="flex items-center space-x-2 px-3 py-2 text-gray-500 cursor-not-allowed">
+          <Globe className="h-4 w-4" />
+          <span className="text-lg">{currentLanguage.flag}</span>
+          <span className="hidden sm:inline">{currentLanguage.name}</span>
+        </div>
+      </div>
+    )
   }
 
   return (

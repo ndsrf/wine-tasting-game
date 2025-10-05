@@ -528,6 +528,8 @@ function DirectorGamePageComponent() {
                   setAnswers={setDirectorAnswers}
                   onSubmitAnswers={handleDirectorSubmitAnswers}
                   submissionState={directorSubmissionState}
+                  playerId={directorPlayer?.id || ''}
+                  code={code}
                 />
               </Card>
             )}
@@ -866,7 +868,9 @@ function DirectorGameplayMatrix({
   answers,
   setAnswers,
   onSubmitAnswers,
-  submissionState
+  submissionState,
+  playerId,
+  code
 }: {
   gameData: any
   gameState: GameState
@@ -874,8 +878,19 @@ function DirectorGameplayMatrix({
   setAnswers: (answers: Record<string, string>) => void
   onSubmitAnswers?: (answers: Record<string, string>) => void
   submissionState: 'idle' | 'submitting' | 'submitted'
+  playerId: string
+  code: string
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const [hint, setHint] = useState<string | null>(null)
+  const [isLoadingHint, setIsLoadingHint] = useState(false)
+  const [hintError, setHintError] = useState<string | null>(null)
+
+  // Reset hint when phase or wine changes
+  useEffect(() => {
+    setHint(null)
+    setHintError(null)
+  }, [gameState.currentPhase, gameState.currentWine])
 
   // Function to get translated characteristic label
   const getCharacteristicLabel = (label: string): string => {
@@ -1075,6 +1090,39 @@ function DirectorGameplayMatrix({
   const answeredCount = Object.keys(answers).length
   const isAllAnswered = answeredCount === totalAnswersNeeded
 
+  const handleGetHint = async () => {
+    setIsLoadingHint(true)
+    setHintError(null)
+
+    try {
+      const response = await fetch(`/api/games/${code}/hint`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playerId,
+          wineNumber: gameState.currentWine,
+          phase: gameState.currentPhase,
+          language: i18n.language || 'en'
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get hint')
+      }
+
+      setHint(data.hint)
+    } catch (error: any) {
+      console.error('Error getting hint:', error)
+      setHintError(error.message || 'Failed to get hint')
+    } finally {
+      setIsLoadingHint(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="bg-wine-50 p-4 rounded-lg">
@@ -1084,6 +1132,41 @@ function DirectorGameplayMatrix({
         <p className="text-sm text-wine-600">
           {t('director.selectCharacteristics', { wineNumber: `${t('game.wineNumber', { number: gameState.currentWine })}`, categoryName: t(`game.${categoryName}`) })}
         </p>
+      </div>
+
+      {/* Hint Section */}
+      <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+        {!hint ? (
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-900 mb-1">
+                {t('game.needHelp')}
+              </h3>
+              <p className="text-sm text-blue-700">
+                {t('game.hintDescription')}
+              </p>
+            </div>
+            <Button
+              onClick={handleGetHint}
+              loading={isLoadingHint}
+              disabled={isLoadingHint}
+              variant="outline"
+              className="ml-4 bg-blue-100 hover:bg-blue-200 text-blue-900 border-blue-300"
+            >
+              {t('game.getHint')}
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+              <span className="mr-2">💡</span> {t('game.hint')}
+            </h3>
+            <p className="text-sm text-blue-800 italic">&ldquo;{hint}&rdquo;</p>
+          </div>
+        )}
+        {hintError && (
+          <p className="text-sm text-red-600 mt-2">{hintError}</p>
+        )}
       </div>
 
       <div className="space-y-4">

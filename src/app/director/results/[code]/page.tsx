@@ -47,10 +47,11 @@ export default function ResultsPage() {
   const router = useRouter()
   const code = params.code as string
   const { user, isLoading: authLoading, isAuthenticated } = useAuth()
-  const { t, ready: i18nReady } = useTranslation()
+  const { t, ready: i18nReady, i18n } = useTranslation()
   const [results, setResults] = useState<ResultsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [explanations, setExplanations] = useState<Record<string, { visual: string; smell: string; taste: string }> | null>(null)
 
   useEffect(() => {
     if (authLoading) return
@@ -61,7 +62,8 @@ export default function ResultsPage() {
 
     const fetchResults = async () => {
       try {
-        const response = await authenticatedFetch(`/api/games/${code}/results`)
+        const currentLanguage = i18n.language || 'en'
+        const response = await authenticatedFetch(`/api/games/${code}/results?language=${currentLanguage}`)
         const data = await response.json()
 
         if (!response.ok) {
@@ -69,6 +71,7 @@ export default function ResultsPage() {
         }
 
         setResults(data.results)
+        setExplanations(data.results.explanations || null)
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -77,7 +80,7 @@ export default function ResultsPage() {
     }
 
     fetchResults()
-  }, [authLoading, isAuthenticated, code, router, t])
+  }, [authLoading, isAuthenticated, code, router, t, i18n.language])
 
   if (isLoading || authLoading || !i18nReady) {
     return (
@@ -122,7 +125,7 @@ export default function ResultsPage() {
     <div className="min-h-screen p-4">
       <div className="max-w-7xl mx-auto">
         <div className="absolute top-4 right-4">
-          <LanguageSwitcher />
+          <LanguageSwitcher locked={true} />
         </div>
 
         <div className="text-center mb-8">
@@ -138,7 +141,9 @@ export default function ResultsPage() {
             {t('results.finalRanking')}
           </h2>
           <div className="space-y-2">
-            {results.players.map((player, index) => (
+            {results.players
+              .sort((a: any, b: any) => b.score - a.score)
+              .map((player, index) => (
               <div
                 key={player.nickname}
                 className={`flex justify-between items-center p-4 rounded-lg ${
@@ -146,9 +151,16 @@ export default function ResultsPage() {
                   index === 1 ? 'bg-gray-200' :
                   index === 2 ? 'bg-yellow-50' : 'bg-gray-50'
                 }`}>
-                <div className="flex items-center">
+                <div className="flex items-center flex-1">
                   <span className="text-lg font-bold w-8">{index + 1}.</span>
-                  <span className="font-medium text-lg">{player.nickname}</span>
+                  <div className="flex-1">
+                    <span className="font-medium text-lg">{player.nickname}</span>
+                    {(player as any).totalHintsUsed > 0 && (
+                      <span className="ml-2 text-sm text-blue-600">
+                        (💡 {(player as any).totalHintsUsed} {t('results.hintsUsed')})
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="font-bold text-lg">{t('results.score', { score: player.score })}</span>
               </div>
@@ -192,13 +204,28 @@ export default function ResultsPage() {
                   <th className="text-left p-3 font-semibold bg-green-100">Wine</th>
                   <th className="text-left p-3 font-semibold bg-green-100">{t('results.correctAnswers')}</th>
                   {/* Director column */}
-                  {results.players.find((p: any) => p.id && p.id.startsWith('director-')) && (
-                    <th className="text-left p-3 font-semibold bg-gray-100">Director</th>
-                  )}
+                  {results.players.find((p: any) => p.id && p.id.startsWith('director-')) && (() => {
+                    const director = results.players.find((p: any) => p.id && p.id.startsWith('director-'))
+                    return (
+                      <th className="text-left p-3 font-semibold bg-gray-100">
+                        <div>Director</div>
+                        {(director as any)?.totalHintsUsed > 0 && (
+                          <div className="text-xs font-normal text-blue-600 mt-1">
+                            💡 {(director as any).totalHintsUsed} {t('results.hintsUsed')}
+                          </div>
+                        )}
+                      </th>
+                    )
+                  })()}
                   {/* Regular player columns */}
                   {results.players.filter((p: any) => !p.id || !p.id.startsWith('director-')).map(player => (
                     <th key={player.nickname} className="text-left p-3 font-semibold bg-gray-50">
-                      {player.nickname}
+                      <div>{player.nickname}</div>
+                      {(player as any).totalHintsUsed > 0 && (
+                        <div className="text-xs font-normal text-blue-600 mt-1">
+                          💡 {(player as any).totalHintsUsed} {t('results.hintsUsed')}
+                        </div>
+                      )}
                     </th>
                   ))}
                 </tr>
@@ -281,7 +308,51 @@ export default function ResultsPage() {
           </div>
         </Card>
 
+        {/* Wine Explanations */}
+        {explanations && Object.keys(explanations).length > 0 && (
+          <Card className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center">
+              <Wine className="h-6 w-6 mr-3" />
+              {t('results.wineExplanations')}
+            </h2>
+            <div className="space-y-6">
+              {results?.wines.map((wine, index) => {
+                const wineKey = `Wine ${index + 1}`
+                const wineExplanations = explanations[wineKey]
 
+                if (!wineExplanations) return null
+
+                return (
+                  <div key={wine.id} className="border-l-4 border-wine-600 pl-4">
+                    <h3 className="text-lg font-semibold text-wine-700 mb-3">
+                      {wine.name} ({wine.year})
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="bg-blue-50 p-3 rounded">
+                        <h4 className="font-semibold text-blue-900 mb-1">
+                          {t('director.visual')}
+                        </h4>
+                        <p className="text-sm text-blue-800">{wineExplanations.visual}</p>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded">
+                        <h4 className="font-semibold text-green-900 mb-1">
+                          {t('director.smell')}
+                        </h4>
+                        <p className="text-sm text-green-800">{wineExplanations.smell}</p>
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded">
+                        <h4 className="font-semibold text-purple-900 mb-1">
+                          {t('director.taste')}
+                        </h4>
+                        <p className="text-sm text-purple-800">{wineExplanations.taste}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        )}
 
         <div className="text-center mt-8">
           <Button onClick={() => router.push('/director')}>
