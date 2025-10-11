@@ -13,7 +13,7 @@ export class GameSocket {
     } else {
       this.io = new SocketIOServer(server, {
         cors: {
-          origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
+          origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001'],
           methods: ['GET', 'POST'],
         },
       })
@@ -154,6 +154,8 @@ export class GameSocket {
 
           this.io.to(data.code).emit('phase-changed', { phase: data.phase })
           this.io.to(data.code).emit('game-state', gameState)
+          // Clear submission tracking for new phase
+          this.io.to(data.code).emit('submissions-cleared')
 
           console.log(`Phase changed to ${data.phase} for game ${data.code}`)
         } catch (error) {
@@ -203,6 +205,8 @@ export class GameSocket {
           this.io.to(data.code).emit('wine-changed', gameState)
           this.io.to(data.code).emit('phase-changed', { phase: 'VISUAL' })
           this.io.to(data.code).emit('game-state', gameState)
+          // Clear submission tracking for new wine
+          this.io.to(data.code).emit('submissions-cleared')
 
           console.log(`Moved to wine ${gameState?.currentWine} for game ${data.code}`)
         } catch (error) {
@@ -339,6 +343,20 @@ export class GameSocket {
             roundScore,
             success: true
           })
+
+          // Notify all players in the room that this player has submitted
+          const player = await prisma.player.findUnique({
+            where: { id: data.playerId }
+          })
+
+          if (player) {
+            this.io.to(data.code).emit('player-submitted', {
+              playerId: data.playerId,
+              nickname: player.nickname,
+              wineNumber: data.wineNumber,
+              characteristicType: data.characteristicType
+            })
+          }
         } catch (error) {
           console.error('Submit answer error:', error)
           socket.emit('error', { message: 'Failed to submit answer' })

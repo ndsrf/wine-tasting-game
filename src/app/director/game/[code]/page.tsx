@@ -36,6 +36,8 @@ function DirectorGamePageComponent() {
   const [mounted, setMounted] = useState(false)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
   const [showBackConfirm, setShowBackConfirm] = useState(false)
+  // Track which players have submitted for each phase: { playerId: { VISUAL: true, SMELL: false, TASTE: false } }
+  const [submittedPlayers, setSubmittedPlayers] = useState<Record<string, Record<CharacteristicType, boolean>>>({})
 
   const { isConnected, joinGame, startGame, changePhase, nextWine, submitAnswer, finishGame } = useSocket({
     onGameState: (state) => {
@@ -59,6 +61,20 @@ function DirectorGamePageComponent() {
         // Otherwise, store socket state and wait for HTTP API data
         return prevState || state
       })
+    },
+    onPlayerSubmitted: (data) => {
+      console.log('Player submitted:', data)
+      setSubmittedPlayers(prev => ({
+        ...prev,
+        [data.playerId]: {
+          ...(prev[data.playerId] || {}),
+          [data.characteristicType as CharacteristicType]: true
+        }
+      }))
+    },
+    onSubmissionsCleared: () => {
+      console.log('Submissions cleared for new wine')
+      setSubmittedPlayers({})
     },
     onPlayerJoined: (newPlayer) => {
       setGameState(prevState => {
@@ -263,7 +279,12 @@ function DirectorGamePageComponent() {
   useEffect(() => {
     setDirectorSubmissionState('idle')
     setDirectorAnswers({})
-  }, [gameState?.currentPhase, gameState?.currentWine])
+  }, [gameState?.currentPhase])
+
+  // Clear submission tracking when wine changes
+  useEffect(() => {
+    setSubmittedPlayers({})
+  }, [gameState?.currentWine])
 
   // Create director player object for submissions
   useEffect(() => {
@@ -416,12 +437,40 @@ function DirectorGamePageComponent() {
               {gameState.players.length === 0 ? (
                 <p className="text-gray-500 text-sm">{t('director.noPlayersJoined')}</p>
               ) : (
-                gameState.players.map((player) => (
-                  <div key={player.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span className="font-medium">{player.nickname}</span>
-                    <span className="text-sm text-gray-600">{player.score} {t('director.points')}</span>
-                  </div>
-                ))
+                gameState.players.map((player) => {
+                  const playerSubmissions = submittedPlayers[player.id] || {}
+                  const showScore = !gameState.isGameStarted || gameState.isGameFinished
+                  return (
+                    <div key={player.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{player.nickname}</span>
+                        {gameState.isGameStarted && !gameState.isGameFinished && (
+                          <div className="flex gap-1">
+                            {(['VISUAL', 'SMELL', 'TASTE'] as CharacteristicType[]).map((phase) => {
+                              const hasSubmittedPhase = playerSubmissions[phase] || false
+                              return (
+                                <span
+                                  key={phase}
+                                  className={`text-xs px-1.5 py-0.5 rounded ${
+                                    hasSubmittedPhase
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-gray-200 text-gray-500'
+                                  }`}
+                                  title={`${t(`director.${phase.toLowerCase()}`)}: ${hasSubmittedPhase ? t('director.submitted') : t('director.pending')}`}
+                                >
+                                  {phase.charAt(0)}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      {showScore && (
+                        <span className="text-sm text-gray-600">{player.score} {t('director.points')}</span>
+                      )}
+                    </div>
+                  )
+                })
               )}
             </div>
           </Card>
@@ -429,9 +478,9 @@ function DirectorGamePageComponent() {
           <Card>
             <h2 className="text-xl font-semibold mb-4">{t('director.gameStatus')}</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">{t('director.status')}</span> {
-                gameState?.isGameStarted ? 'IN_PROGRESS' :
+              <p key="status"><span className="font-medium">{t('director.status')}</span> {
                 gameState?.isGameFinished ? 'FINISHED' :
+                gameState?.isGameStarted ? 'IN_PROGRESS' :
                 gameState?.game?.status || 'CREATED'
               }</p>
               <p key="difficulty"><span className="font-medium">{t('director.difficulty')}</span> {gameState?.game?.difficulty || t('common.loading')}</p>

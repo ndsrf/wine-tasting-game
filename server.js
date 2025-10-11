@@ -5,7 +5,7 @@ const { Server } = require('socket.io')
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
-const port = parseInt(process.env.PORT, 10) || 3000
+const port = parseInt(process.env.PORT, 10) || 3001
 
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()
@@ -25,7 +25,7 @@ app.prepare().then(() => {
   // Initialize Socket.io
   const io = new Server(server, {
     cors: {
-      origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
+      origin: process.env.NODE_ENV === 'production' ? false : [`http://localhost:${port}`],
       methods: ['GET', 'POST'],
     },
   })
@@ -234,6 +234,7 @@ app.prepare().then(() => {
         gameStates.set(code, gameState)
 
         io.to(code).emit('wine-changed', gameState)
+        io.to(code).emit('submissions-cleared')
         console.log(`✅ Moved to wine ${gameState.currentWine} for game ${code}`)
       }
     })
@@ -244,7 +245,7 @@ app.prepare().then(() => {
 
       try {
         // Fetch game data to get correct wine characteristics
-        const response = await fetch(`http://localhost:3000/api/games/${code}`)
+        const response = await fetch(`http://localhost:${port}/api/games/${code}`)
         const gameData = await response.json()
 
         if (gameData.error) {
@@ -353,6 +354,15 @@ app.prepare().then(() => {
           console.log(`✅ Player ${playerId} score updated: ${updatedPlayer.score} (added ${roundScore} points)`)
 
           console.log(`✅ Player score updated: +${roundScore}`)
+
+          // Notify all players in the room that this player has submitted
+          io.to(code).emit('player-submitted', {
+            playerId: playerId,
+            nickname: updatedPlayer.nickname,
+            wineNumber: wineNumber,
+            characteristicType: characteristicType
+          })
+          console.log(`✅ Broadcasted player-submitted event for ${updatedPlayer.nickname}`)
 
         } catch (dbError) {
           console.error('❌ Database error saving answers:', dbError)

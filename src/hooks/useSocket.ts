@@ -12,6 +12,8 @@ interface UseSocketOptions {
   onWineChanged?: (state: GameState) => void
   onAnswerSubmitted?: (data: { correctCount: number; totalQuestions?: number; roundScore?: number; error?: string }) => void
   onScoreUpdated?: (data: { playerId: string; newScore: number; roundScore: number; correctCount: number; totalQuestions: number }) => void
+  onPlayerSubmitted?: (data: { playerId: string; nickname: string; wineNumber: number; characteristicType: string }) => void
+  onSubmissionsCleared?: () => void
   onGameFinished?: (state: GameState) => void
   onError?: (error: { message: string }) => void
 }
@@ -26,7 +28,7 @@ export function useSocket(options: UseSocketOptions = {}) {
   })
 
   useEffect(() => {
-    const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000')
+    const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001')
     socketRef.current = socket
 
     socket.on('connect', () => {
@@ -52,6 +54,8 @@ export function useSocket(options: UseSocketOptions = {}) {
     socket.on('wine-changed', getOption('onWineChanged'))
     socket.on('answer-submitted', getOption('onAnswerSubmitted'))
     socket.on('score-updated', getOption('onScoreUpdated'))
+    socket.on('player-submitted', getOption('onPlayerSubmitted'))
+    socket.on('submissions-cleared', getOption('onSubmissionsCleared'))
     socket.on('game-finished', getOption('onGameFinished'))
     socket.on('error', getOption('onError'))
 
