@@ -354,6 +354,11 @@ function DirectorGamePageComponent() {
     }
   }
 
+  // Memoize the finish button visibility to prevent flickering during state updates
+  const showFinishButton = useMemo(() => {
+    return !!(gameState?.game?.wineCount && gameState?.currentWine >= gameState.game.wineCount)
+  }, [gameState?.game?.wineCount, gameState?.currentWine])
+
   // Show loading state until mounted and auth resolved
   if (!mounted || authLoading || !i18nReady) {
     return (
@@ -538,13 +543,13 @@ function DirectorGamePageComponent() {
                   <Button
                     onClick={handleNextWine}
                     className="inline-flex items-center"
-                    disabled={!gameState?.game?.wineCount || gameState.currentWine >= gameState.game.wineCount}
+                    disabled={showFinishButton}
                   >
                     <ArrowRight className="h-4 w-4 mr-2" />
                     {t('director.nextWine')}
                   </Button>
 
-                  {gameState?.game?.wineCount && gameState.currentWine >= gameState.game.wineCount && (
+                  {showFinishButton && (
                     <Button
                       onClick={() => setShowFinishConfirm(true)}
                       variant="secondary"
