@@ -13,9 +13,22 @@ export class GameSocket {
     } else {
       this.io = new SocketIOServer(server, {
         cors: {
-          origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3001'],
+          // Allow origin from environment variable for Cloudflare tunnels
+          origin: process.env.NODE_ENV === 'production'
+            ? (process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : true)
+            : ['http://localhost:3001'],
           methods: ['GET', 'POST'],
+          credentials: true,
         },
+        // Enable WebSocket transport with polling fallback
+        transports: ['websocket', 'polling'],
+        // Allow upgrade from polling to WebSocket
+        allowUpgrades: true,
+        // Increase ping timeout for Cloudflare tunnels
+        pingTimeout: 60000,
+        pingInterval: 25000,
+        // Path for Socket.io (default is /socket.io)
+        path: '/socket.io/',
       })
     }
 

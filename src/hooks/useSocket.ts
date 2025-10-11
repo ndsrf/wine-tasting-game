@@ -28,7 +28,18 @@ export function useSocket(options: UseSocketOptions = {}) {
   })
 
   useEffect(() => {
-    const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001')
+    const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001', {
+      // Enable WebSocket transport with polling fallback
+      transports: ['websocket', 'polling'],
+      // Upgrade to WebSocket as soon as possible
+      upgrade: true,
+      // Reconnection settings for Cloudflare tunnels
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    })
     socketRef.current = socket
 
     socket.on('connect', () => {

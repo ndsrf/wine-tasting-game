@@ -25,9 +25,22 @@ app.prepare().then(() => {
   // Initialize Socket.io
   const io = new Server(server, {
     cors: {
-      origin: process.env.NODE_ENV === 'production' ? false : [`http://localhost:${port}`],
+      // Allow origin from environment variable for Cloudflare tunnels
+      origin: process.env.NODE_ENV === 'production'
+        ? (process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : true)
+        : [`http://localhost:${port}`],
       methods: ['GET', 'POST'],
+      credentials: true,
     },
+    // Enable WebSocket transport with polling fallback
+    transports: ['websocket', 'polling'],
+    // Allow upgrade from polling to WebSocket
+    allowUpgrades: true,
+    // Increase ping timeout for Cloudflare tunnels
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    // Path for Socket.io (default is /socket.io)
+    path: '/socket.io/',
   })
 
   // Game state storage for development

@@ -281,15 +281,30 @@ docker-compose up -d app
 
 ### Method 2: Automatic Updates with Watchtower
 
-```bash
-# Add to docker-compose.yml
-services:
-  watchtower:
-    image: containrrr/watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300 --cleanup
+Watchtower is included in the `docker-compose.yml` and automatically checks for updates every 5 minutes (300 seconds).
+
+**Configuration in docker-compose.yml:**
+```yaml
+watchtower:
+  image: containrrr/watchtower
+  restart: unless-stopped
+  dns:
+    - 1.1.1.1
+    - 8.8.8.8
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - WATCHTOWER_CLEANUP=true
+    - WATCHTOWER_POLL_INTERVAL=300
 ```
+
+**Check Watchtower logs:**
+```bash
+docker-compose logs -f watchtower
+```
+
+**Common Issue - DNS Resolution:**
+If you see errors like `dial tcp: lookup ghcr.io: i/o timeout`, this is a DNS issue. The `dns` setting in docker-compose.yml fixes this by using Cloudflare (1.1.1.1) and Google (8.8.8.8) DNS servers.
 
 ---
 
@@ -395,10 +410,39 @@ docker-compose exec postgres pg_isready -U wineuser
 ### Can't pull image from GHCR
 
 ```bash
+# Check if it's a DNS issue first
+docker run --rm alpine ping -c 3 ghcr.io
+
+# If ping fails with "bad address" or timeout, it's DNS
+# Solution: Docker daemon configuration or docker-compose DNS settings (already included)
+
+# For authentication issues:
 # Login to GitHub Container Registry
 echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
 # Or make package public in GitHub settings
+```
+
+### DNS resolution issues in LXC
+
+```bash
+# Symptom: Watchtower or docker pull shows "lookup ghcr.io: i/o timeout"
+
+# Solution 1: Already included in docker-compose.yml (dns: 1.1.1.1, 8.8.8.8)
+# Just redeploy with updated docker-compose.yml
+
+# Solution 2: Configure Docker daemon (system-wide fix)
+cat > /etc/docker/daemon.json << 'EOF'
+{
+  "dns": ["1.1.1.1", "8.8.8.8"]
+}
+EOF
+
+# Restart Docker
+systemctl restart docker
+
+# Verify DNS works
+docker run --rm alpine nslookup ghcr.io
 ```
 
 ---
