@@ -33,7 +33,8 @@ const resources = {
       homepage: {
         title: 'Wine Tasting Game',
         subtitle: 'The Ultimate Multiplayer Wine Tasting Experience',
-        description: 'Test your wine knowledge with friends! A director creates the game while players guess wine characteristics across visual, smell, and taste categories. Perfect for wine enthusiasts and beginners alike.',
+        description: 'Guess wine characteristics. Play with friends!',
+        tagline: 'Test your palate and compete with friends!',
         joinGame: 'Join a Game',
         createGame: 'Create a Game',
         enterCode: 'Enter 5-character game code',
@@ -434,7 +435,8 @@ const resources = {
       homepage: {
         title: 'Juego de Cata de Vinos',
         subtitle: 'La Experiencia Definitiva de Cata de Vinos Multijugador',
-        description: '¡Pon a prueba tu conocimiento sobre vinos con amigos! Un director crea el juego mientras los jugadores adivinan características del vino en categorías visuales, olfativas y gustativas. Perfecto tanto para entusiastas del vino como para principiantes.',
+        description: '¡Adivina características del vino. Juega con amigos!',
+        tagline: '¡Pon a prueba tu paladar y compite con amigos!',
         joinGame: 'Unirse a un Juego',
         createGame: 'Crear un Juego',
         enterCode: 'Introduce el código de 5 caracteres',
@@ -838,7 +840,8 @@ const resources = {
       homepage: {
         title: 'Jeu de Dégustation de Vin',
         subtitle: "L'Expérience Ultime de Dégustation de Vin Multijoueur",
-        description: 'Testez vos connaissances en vin avec des amis ! Un directeur crée le jeu pendant que les joueurs devinent les caractéristiques du vin dans les catégories visuelles, olfactives et gustatives. Parfait pour les passionnés de vin et les débutants.',
+        description: 'Devinez les caractéristiques du vin. Jouez entre amis !',
+        tagline: 'Testez votre palais et affrontez vos amis !',
         joinGame: 'Rejoindre un Jeu',
         createGame: 'Créer un Jeu',
         enterCode: 'Entrez le code à 5 caractères',
