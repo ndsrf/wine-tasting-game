@@ -176,15 +176,60 @@ NODE_ENV="development"
 
 **Note**: This application uses Socket.io for real-time functionality, which requires a persistent WebSocket connection. It is **not compatible** with serverless platforms like Vercel, AWS Lambda, or Netlify Functions. Deploy to a VPS or container platform instead.
 
-### Docker (Recommended)
+### Docker Deployment
 
-```bash
-# Build image
-docker build -t wine-tasting-game .
+Public Docker images are available at `ghcr.io/ndsrf/wine-tasting-game`.
 
-# Run with environment variables
-docker run -p 3000:3000 --env-file .env wine-tasting-game
-```
+#### Option 1: Docker Compose (Recommended)
+
+This method is recommended as it automatically sets up the application, PostgreSQL database, and Redis cache.
+
+1.  Create a directory for your deployment, and `cd` into it.
+    ```bash
+    mkdir wine-tasting
+    cd wine-tasting
+    ```
+
+2.  Create an `.env` file. You can use `.env.example` from the repository as a template. **Important:** For Docker Compose, ensure your `DATABASE_URL` and `REDIS_URL` point to the service names (`postgres` and `redis` respectively), as shown in the example `.env` content in `DOCKER_DEPLOYMENT.md`.
+
+3.  Download the `docker-compose.yml` file from the repository:
+    ```bash
+    wget https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/docker-compose.yml
+    ```
+
+4.  Pull the latest images and start the services in detached mode:
+    ```bash
+    docker-compose pull
+    docker-compose up -d
+    ```
+
+5.  Initialize the database by running the Prisma migration inside the running `app` container:
+    ```bash
+    docker-compose exec app npx prisma db push
+    ```
+
+Your application should now be running and accessible at `http://localhost:3000`.
+
+#### Option 2: Standalone Docker Container
+
+Use this option if you are managing your own PostgreSQL and Redis instances.
+
+1.  Ensure you have a `.env` file ready and that the `DATABASE_URL` and `REDIS_URL` variables point to your existing database and Redis server.
+
+2.  Pull the latest image from the GitHub Container Registry:
+    ```bash
+    docker pull ghcr.io/ndsrf/wine-tasting-game:latest
+    ```
+
+3.  Run the container, making sure to pass your environment file:
+    ```bash
+    docker run -p 3000:3000 --env-file .env --name wine-tasting-app ghcr.io/ndsrf/wine-tasting-game:latest
+    ```
+
+4.  Initialize the database. You can do this by executing a command inside the running container:
+    ```bash
+    docker exec wine-tasting-app npx prisma db push
+    ```
 
 ### VPS Deployment (DigitalOcean, Linode, AWS EC2, etc.)
 
