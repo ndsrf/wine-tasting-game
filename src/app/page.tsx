@@ -102,15 +102,15 @@ export default function HomePage() {
               <div className="grid grid-cols-3 gap-6 pt-8">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gold-300">3</div>
-                  <div className="text-sm text-wine-200">Difficulty Levels</div>
+                  <div className="text-sm text-wine-200">{t('homepage.statDifficultyLevels')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gold-300">15+</div>
-                  <div className="text-sm text-wine-200">Characteristics</div>
+                  <div className="text-sm text-wine-200">{t('homepage.statCharacteristics')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gold-300">∞</div>
-                  <div className="text-sm text-wine-200">Players</div>
+                  <div className="text-sm text-wine-200">{t('homepage.statPlayers')}</div>
                 </div>
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function HomePage() {
         <section className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('homepage.howItWorks')}</h2>
-            <p className="text-xl text-gray-600">Get started in 3 simple steps</p>
+            <p className="text-xl text-gray-600">{t('homepage.getStartedSteps')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center group">
@@ -307,17 +307,17 @@ export default function HomePage() {
         {/* Tasting Phases */}
         <section className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">The Tasting Experience</h2>
-            <p className="text-xl text-gray-600">Master three professional phases</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('homepage.tastingExperience')}</h2>
+            <p className="text-xl text-gray-600">{t('homepage.masterProfessionalPhases')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-8 text-center hover:shadow-2xl transition-all duration-300 border-t-4 border-yellow-500">
               <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Eye className="h-8 w-8 text-yellow-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-700">Visual</h3>
+              <h3 className="text-2xl font-bold mb-3 text-yellow-700">{t('homepage.visualPhase')}</h3>
               <p className="text-gray-600">
-                Examine color, clarity, and appearance. Each hue tells a story.
+                {t('homepage.visualDescription')}
               </p>
             </Card>
 
@@ -325,9 +325,9 @@ export default function HomePage() {
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Wind className="h-8 w-8 text-purple-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-purple-700">Aroma</h3>
+              <h3 className="text-2xl font-bold mb-3 text-purple-700">{t('homepage.aromaPhase')}</h3>
               <p className="text-gray-600">
-                Identify fruity, floral, or earthy notes in the bouquet.
+                {t('homepage.aromaDescription')}
               </p>
             </Card>
 
@@ -335,9 +335,9 @@ export default function HomePage() {
               <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <TrendingUp className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-red-700">Taste</h3>
+              <h3 className="text-2xl font-bold mb-3 text-red-700">{t('homepage.tastePhase')}</h3>
               <p className="text-gray-600">
-                Evaluate sweetness, acidity, tannins, and body on your palate.
+                {t('homepage.tasteDescription')}
               </p>
             </Card>
           </div>
@@ -347,7 +347,7 @@ export default function HomePage() {
         <section className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('homepage.difficultyLevels')}</h2>
-            <p className="text-xl text-gray-600">Pick your challenge level</p>
+            <p className="text-xl text-gray-600">{t('homepage.pickYourChallenge')}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-8 text-center hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
@@ -387,13 +387,13 @@ export default function HomePage() {
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('homepage.mobileOptimized')}</h2>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-6">
-              Play anywhere on any device with real-time sync.
+              {t('homepage.mobileDescription')}
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold">
-              <span className="bg-white/60 px-4 py-2 rounded-full">📱 iOS</span>
-              <span className="bg-white/60 px-4 py-2 rounded-full">🤖 Android</span>
-              <span className="bg-white/60 px-4 py-2 rounded-full">💻 Desktop</span>
-              <span className="bg-white/60 px-4 py-2 rounded-full">⚡ Real-time</span>
+              <span className="bg-white/60 px-4 py-2 rounded-full">📱 {t('homepage.deviceIOS')}</span>
+              <span className="bg-white/60 px-4 py-2 rounded-full">🤖 {t('homepage.deviceAndroid')}</span>
+              <span className="bg-white/60 px-4 py-2 rounded-full">💻 {t('homepage.deviceDesktop')}</span>
+              <span className="bg-white/60 px-4 py-2 rounded-full">⚡ {t('homepage.deviceRealtime')}</span>
             </div>
           </div>
         </section>
@@ -409,24 +409,24 @@ export default function HomePage() {
                 <span className="text-xl font-bold">{t('homepage.title')}</span>
               </div>
               <p className="text-wine-200">
-                Wine tasting made fun with AI-powered games.
+                {t('homepage.footerTagline')}
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Quick Links</h4>
+              <h4 className="font-bold mb-4">{t('homepage.quickLinks')}</h4>
               <ul className="space-y-2 text-wine-200">
-                <li><Link href="/auth/login" className="hover:text-gold-300 transition-colors">Create Game</Link></li>
-                <li><a href="#join-game" className="hover:text-gold-300 transition-colors">Join Game</a></li>
-                <li><Link href="/director" className="hover:text-gold-300 transition-colors">Director Dashboard</Link></li>
+                <li><Link href="/auth/login" className="hover:text-gold-300 transition-colors">{t('homepage.createGameLink')}</Link></li>
+                <li><a href="#join-game" className="hover:text-gold-300 transition-colors">{t('homepage.joinGameLink')}</a></li>
+                <li><Link href="/director" className="hover:text-gold-300 transition-colors">{t('homepage.directorDashboardLink')}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Features</h4>
+              <h4 className="font-bold mb-4">{t('homepage.features')}</h4>
               <ul className="space-y-2 text-wine-200">
-                <li>✨ AI-Powered Hints</li>
-                <li>🌍 Multi-language Support</li>
-                <li>📊 Real-time Scoring</li>
-                <li>🎯 Three Difficulty Levels</li>
+                <li>✨ {t('homepage.featureAIPowered')}</li>
+                <li>🌍 {t('homepage.featureMultilanguage')}</li>
+                <li>📊 {t('homepage.featureRealtime')}</li>
+                <li>🎯 {t('homepage.featureDifficulty')}</li>
               </ul>
             </div>
           </div>
@@ -438,7 +438,7 @@ export default function HomePage() {
                   href="/test"
                   className="text-gold-300 hover:text-gold-200 text-sm underline"
                 >
-                  🧪 Create Test Room (Dev Only)
+                  🧪 {t('homepage.testRoomDev')}
                 </Link>
               </div>
             )}

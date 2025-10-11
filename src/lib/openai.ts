@@ -41,12 +41,20 @@ IMPORTANT: All characteristic names MUST be in English exactly as they appear in
 
 Make sure the characteristics are realistic for each wine type and vintage. Ensure there are meaningful differences between wines to make the guessing game challenging but fair.
 
+For each wine, also provide a confidence score (0-100) indicating how certain you are about the wine's identity and ability to provide accurate characteristics. Consider:
+- Whether the wine name is recognizable and specific
+- Whether the vintage year is appropriate for that wine
+- Whether you have enough information to provide accurate characteristics
+
+If the wine name is vague, misspelled, or you're uncertain about its identity, assign a lower confidence score.
+
 Return the response in this exact JSON format:
 {
   "wines": [
     {
       "name": "Wine Name",
       "year": 2020,
+      "confidence": 95,
       "characteristics": {
         "visual": ["characteristic1", "characteristic2", "characteristic3"],
         "smell": ["characteristic1", "characteristic2", "characteristic3"],
@@ -79,6 +87,24 @@ Return the response in this exact JSON format:
 
     const result = JSON.parse(content)
 
+    // Check confidence scores
+    const lowConfidenceWines = result.wines.filter((wineData: any) => {
+      const confidence = wineData.confidence || 0
+      return confidence < 80
+    })
+
+    if (lowConfidenceWines.length > 0) {
+      // Return structured data for translation on the client side
+      const error: any = new Error('LOW_CONFIDENCE_WINES')
+      error.isConfidenceError = true
+      error.lowConfidenceWines = lowConfidenceWines.map((w: any) => ({
+        name: w.name,
+        year: w.year,
+        confidence: w.confidence || 0
+      }))
+      throw error
+    }
+
     const processedWines = result.wines.map((wineData: any, index: number) => ({
       wine: wines[index],
       characteristics: wineData.characteristics,
@@ -92,6 +118,11 @@ Return the response in this exact JSON format:
     }
   } catch (error) {
     console.error('OpenAI API error:', error)
+
+    // If it's a confidence error, throw it so the game creation fails
+    if (error instanceof Error && (error as any).isConfidenceError) {
+      throw error
+    }
 
     return {
       wines: wines.map(wine => ({

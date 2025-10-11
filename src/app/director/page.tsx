@@ -95,7 +95,16 @@ export default function DirectorPage() {
           // Unauthorized - redirect to login
           router.push('/auth/login?redirect=/director')
         } else {
-          setError(data.error || t('errors.failedToCreateGame'))
+          // Handle translatable errors (like low confidence wines)
+          if (data.translatable && data.error === 'LOW_CONFIDENCE_WINES' && data.lowConfidenceWines) {
+            const winesList = data.lowConfidenceWines
+              .map((w: any) => t('errors.confidenceScore', { name: w.name, year: w.year, confidence: w.confidence }))
+              .join(', ')
+            const errorMessage = `${t('errors.lowConfidenceWines')} ${t('errors.lowConfidenceWinesList', { wines: winesList })}`
+            setError(errorMessage)
+          } else {
+            setError(data.error || t('errors.failedToCreateGame'))
+          }
         }
       }
     } catch (err) {

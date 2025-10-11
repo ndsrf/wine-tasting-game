@@ -44,6 +44,29 @@ export async function POST(request: NextRequest) {
       existingGame = await prisma.game.findUnique({ where: { code } })
     }
 
+    // Validate wine characteristics with OpenAI before creating the game
+    let wineCharacteristics
+    let similarityWarning
+    try {
+      const result = await generateWineCharacteristics(wines, difficulty, language)
+      wineCharacteristics = result.wines
+      similarityWarning = result.similarityWarning
+    } catch (confidenceError: any) {
+      // If confidence validation fails, return structured error data for client-side translation
+      if (confidenceError instanceof Error && (confidenceError as any).isConfidenceError) {
+        return NextResponse.json(
+          {
+            error: 'LOW_CONFIDENCE_WINES',
+            lowConfidenceWines: (confidenceError as any).lowConfidenceWines,
+            translatable: true
+          },
+          { status: 400 }
+        )
+      }
+      // Re-throw other errors
+      throw confidenceError
+    }
+
     const game = await prisma.game.create({
       data: {
         code,
@@ -53,8 +76,6 @@ export async function POST(request: NextRequest) {
         status: 'CREATED',
       },
     })
-
-    const { wines: wineCharacteristics, similarityWarning } = await generateWineCharacteristics(wines, difficulty, language)
 
     for (let i = 0; i < wineCharacteristics.length; i++) {
       const { wine, characteristics } = wineCharacteristics[i]
