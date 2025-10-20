@@ -12,6 +12,7 @@ import { Difficulty } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
 import { authenticatedFetch } from '@/lib/auth-client'
 import '@/lib/i18n'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface WineEntry {
   name: string
@@ -165,6 +166,20 @@ export default function DirectorPage() {
             <div className="bg-wine-50 rounded-lg p-6 mb-6">
               <p className="text-sm text-gray-600 mb-2">{t('director.gameCode')}</p>
               <p className="text-4xl font-bold tracking-widest text-wine-600">{gameCode}</p>
+            </div>
+
+            <div className="flex flex-col items-center mb-6">
+              <p className="text-sm text-gray-600 mb-3">{t('director.scanToJoin')}</p>
+              <div className="bg-white p-4 rounded-lg border-2 border-wine-200">
+                <QRCodeSVG
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/game/${gameCode}`}
+                  size={200}
+                  level="H"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {typeof window !== 'undefined' ? `${window.location.origin}/game/${gameCode}` : ''}
+              </p>
             </div>
 
             {similarityWarning && (

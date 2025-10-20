@@ -1,3 +1,6 @@
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' })
+
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
