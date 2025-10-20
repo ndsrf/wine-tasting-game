@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import '@/lib/i18n'
 import { normalizeCharacteristicToEnglish } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { saveGameSession, getGameSession, clearGameSession } from '@/lib/session-storage'
 
 function GamePageComponent() {
   const params = useParams()
@@ -25,8 +26,9 @@ function GamePageComponent() {
   const [gameInfo, setGameInfo] = useState<any>(null) // Store basic game info for welcome screen
   const [error, setError] = useState('')
   const [joining, setJoining] = useState(false)
+  const hasAttemptedReconnect = useRef(false)
 
-  const { isConnected, joinGame, submitAnswer } = useSocket({
+  const { isConnected, isReconnecting, joinGame, submitAnswer, socket } = useSocket({
     onGameState: (state) => setGameState(state),
     onPlayerJoined: (newPlayer) => {
       if (gameState) {
@@ -41,6 +43,14 @@ function GamePageComponent() {
       setPlayer(data.player)
       setJoining(false) // Stop the joining loading state
       setError('') // Clear any errors
+
+      // Save session for reconnection
+      saveGameSession({
+        playerId: data.player.id,
+        nickname: data.player.nickname,
+        gameCode: code,
+        isDirector: false
+      })
     },
     onError: (err) => {
       setError(err.message)
@@ -93,6 +103,29 @@ function GamePageComponent() {
     // Don't set joining to false here - let the socket response handle it
   }
 
+  // Auto-reconnect effect - runs when socket reconnects
+  useEffect(() => {
+    if (!isConnected || !socket || hasAttemptedReconnect.current) return
+
+    // Check if we have a saved session for this game
+    const savedSession = getGameSession()
+    if (savedSession && savedSession.gameCode === code && !savedSession.isDirector) {
+      console.log('Found saved player session, attempting auto-reconnect:', savedSession)
+      hasAttemptedReconnect.current = true
+
+      // Restore player state immediately
+      setNickname(savedSession.nickname)
+
+      // Rejoin the game with saved session
+      joinGame({
+        code: savedSession.gameCode,
+        nickname: savedSession.nickname,
+        playerId: savedSession.playerId,
+        isReconnect: true
+      })
+    }
+  }, [isConnected, socket, code, joinGame])
+
   useEffect(() => {
     // Only fetch game info to validate the code exists and show basic info on welcome screen
     if (isConnected && !player && !gameInfo) {
@@ -111,14 +144,30 @@ function GamePageComponent() {
     }
   }, [isConnected, code, player, gameInfo, t])
 
+  // Clear session when game finishes
+  useEffect(() => {
+    if (gameState?.isGameFinished) {
+      clearGameSession()
+    }
+  }, [gameState?.isGameFinished])
+
   // Show connecting state after mounted but before socket connects
   if (!isConnected || !i18nReady) {
+    const savedSession = getGameSession()
+    const isReconnectAttempt = savedSession && savedSession.gameCode === code
+
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
-          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.connecting')}</h2>
-          <p className="text-gray-600">{t('game.connectingDescription')}</p>
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {isReconnecting || isReconnectAttempt ? t('game.reconnecting') || 'Reconnecting...' : t('game.connecting')}
+          </h2>
+          <p className="text-gray-600">
+            {isReconnectAttempt
+              ? `Restoring your session as ${savedSession.nickname}...`
+              : t('game.connectingDescription')}
+          </p>
         </Card>
       </div>
     )

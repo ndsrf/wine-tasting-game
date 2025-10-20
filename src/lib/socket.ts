@@ -16,7 +16,7 @@ export class GameSocket {
           // Allow origin from environment variable for Cloudflare tunnels
           origin: process.env.NODE_ENV === 'production'
             ? (process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : true)
-            : ['http://localhost:3001'],
+            : [`http://localhost:${process.env.PORT || 3000}`],
           methods: ['GET', 'POST'],
           credentials: true,
         },
@@ -24,9 +24,9 @@ export class GameSocket {
         transports: ['websocket', 'polling'],
         // Allow upgrade from polling to WebSocket
         allowUpgrades: true,
-        // Increase ping timeout for Cloudflare tunnels
-        pingTimeout: 60000,
-        pingInterval: 25000,
+        // Increase ping timeout for mobile devices (screen sleep, network switches)
+        pingTimeout: 180000, // 3 minutes - enough for screen sleep and network transitions
+        pingInterval: 25000, // Keep at 25s for quick detection when connection is active
         // Path for Socket.io (default is /socket.io)
         path: '/socket.io/',
       })
@@ -39,7 +39,7 @@ export class GameSocket {
     this.io.on('connection', (socket) => {
       console.log('User connected:', socket.id)
 
-      socket.on('join-game', async (data: { code: string; nickname?: string; userId?: string }) => {
+      socket.on('join-game', async (data: { code: string; nickname?: string; userId?: string; playerId?: string; isReconnect?: boolean }) => {
         try {
           const game = await prisma.game.findUnique({
             where: { code: data.code },
@@ -59,7 +59,7 @@ export class GameSocket {
           console.log(`Socket ${socket.id} joined room ${data.code}`)
 
           if (data.userId && data.userId === game.directorId) {
-            // Check if director player already exists, if not create one
+            // Director reconnection
             let directorPlayer = game.players.find(p => p.id === `director-${data.userId}`)
             if (!directorPlayer) {
               directorPlayer = await prisma.player.create({
@@ -70,27 +70,60 @@ export class GameSocket {
                   sessionId: `director-session-${socket.id}`,
                 },
               })
+            } else {
+              // Update session ID for reconnected director
+              await prisma.player.update({
+                where: { id: directorPlayer.id },
+                data: { sessionId: `director-session-${socket.id}` }
+              })
             }
             socket.emit('joined-as-director', { game, directorPlayer })
-            console.log(`Director ${data.userId} joined game ${data.code}`)
+            console.log(`Director ${data.userId} ${data.isReconnect ? 'reconnected to' : 'joined'} game ${data.code}`)
           } else if (data.nickname) {
-            const existingPlayer = game.players.find(p => p.nickname === data.nickname)
+            // Player joining or reconnecting
+            let player
 
-            if (existingPlayer) {
-              socket.emit('error', { message: 'Nickname already taken' })
-              return
+            // Check if this is a reconnection with playerId
+            if (data.playerId && data.isReconnect) {
+              player = game.players.find(p => p.id === data.playerId)
+              if (player) {
+                // Update session ID for reconnected player
+                await prisma.player.update({
+                  where: { id: player.id },
+                  data: { sessionId: socket.id }
+                })
+                console.log(`Player ${player.nickname} reconnected to game ${data.code}`)
+              }
             }
 
-            const player = await prisma.player.create({
-              data: {
-                gameId: game.id,
-                nickname: data.nickname,
-                sessionId: socket.id,
-              },
-            })
+            // If not found by playerId, try to find by nickname (could be refresh or duplicate tab)
+            if (!player) {
+              player = game.players.find(p => p.nickname === data.nickname)
+            }
+
+            // If player exists with same nickname
+            if (player) {
+              // Update their session ID to the new socket
+              await prisma.player.update({
+                where: { id: player.id },
+                data: { sessionId: socket.id }
+              })
+              console.log(`Player ${player.nickname} ${data.isReconnect ? 'reconnected' : 'rejoined'} game ${data.code}`)
+            } else {
+              // New player joining
+              player = await prisma.player.create({
+                data: {
+                  gameId: game.id,
+                  nickname: data.nickname,
+                  sessionId: socket.id,
+                },
+              })
+              console.log(`New player ${player.nickname} joined game ${data.code}`)
+              // Notify other players only for new joins, not reconnections
+              socket.to(data.code).emit('player-joined', { player })
+            }
 
             socket.emit('joined-as-player', { player, game })
-            socket.to(data.code).emit('player-joined', { player })
           }
 
           const gameState = await this.getGameState(data.code)

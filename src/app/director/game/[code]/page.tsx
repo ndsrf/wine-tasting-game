@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import '@/lib/i18n'
 import { normalizeCharacteristicToEnglish } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { saveGameSession, getGameSession, clearGameSession } from '@/lib/session-storage'
 
 function DirectorGamePageComponent() {
   const params = useParams()
@@ -39,7 +40,7 @@ function DirectorGamePageComponent() {
   // Track which players have submitted for each phase: { playerId: { VISUAL: true, SMELL: false, TASTE: false } }
   const [submittedPlayers, setSubmittedPlayers] = useState<Record<string, Record<CharacteristicType, boolean>>>({})
 
-  const { isConnected, joinGame, startGame, changePhase, nextWine, submitAnswer, finishGame } = useSocket({
+  const { isConnected, isReconnecting, joinGame, startGame, changePhase, nextWine, submitAnswer, finishGame, socket } = useSocket({
     onGameState: (state) => {
       // Always preserve the game object and merge with socket state
       setGameState(prevState => {
@@ -89,6 +90,17 @@ function DirectorGamePageComponent() {
     },
     onJoinedAsDirector: (data) => {
       console.log('Director joined:', data)
+
+      // Save session for reconnection
+      if (user) {
+        saveGameSession({
+          playerId: data.directorPlayer?.id || `director-${user.id}`,
+          nickname: user.email || 'Director',
+          gameCode: code,
+          isDirector: true,
+          userId: user.id
+        })
+      }
     },
     onError: (err) => setError(err.message),
     onGameStarted: (state) => {
@@ -179,7 +191,11 @@ function DirectorGamePageComponent() {
   }, [mounted, authLoading, isAuthenticated, router, code])
 
   useEffect(() => {
-    if (isConnected && user) {
+    if (isConnected && user && socket) {
+      // Check for saved director session
+      const savedSession = getGameSession()
+      const isReconnect = !!(savedSession && savedSession.gameCode === code && savedSession.isDirector && savedSession.userId === user.id)
+
       // Try to load game from API first
       authenticatedFetch(`/api/games/${code}`)
         .then(res => res.json())
@@ -237,9 +253,14 @@ function DirectorGamePageComponent() {
             })
           }
 
-          // Join the Socket.io room as director (only once)
+          // Join the Socket.io room as director (allow rejoining for reconnection)
           if (!hasJoinedSocketRef.current) {
-            joinGame({ code, userId: user.id })
+            console.log(`Director ${isReconnect ? 'reconnecting' : 'joining'} game ${code}`)
+            joinGame({
+              code,
+              userId: user.id,
+              isReconnect: isReconnect
+            })
             hasJoinedSocketRef.current = true
           }
         })
@@ -266,14 +287,40 @@ function DirectorGamePageComponent() {
             return newGameState
           })
 
-          // Join the Socket.io room as director (only once)
+          // Join the Socket.io room as director (allow rejoining for reconnection)
           if (!hasJoinedSocketRef.current) {
-            joinGame({ code, userId: user.id })
+            console.log(`Director ${isReconnect ? 'reconnecting' : 'joining'} game ${code}`)
+            joinGame({
+              code,
+              userId: user.id,
+              isReconnect: isReconnect
+            })
             hasJoinedSocketRef.current = true
           }
         })
     }
-  }, [isConnected, code, user, joinGame])
+  }, [isConnected, code, user, socket, joinGame])
+
+  // Reset hasJoinedSocketRef when socket reconnects to allow rejoining
+  useEffect(() => {
+    if (socket) {
+      const handleReconnect = () => {
+        console.log('Director socket reconnected, resetting join flag')
+        hasJoinedSocketRef.current = false
+      }
+      socket.on('reconnect', handleReconnect)
+      return () => {
+        socket.off('reconnect', handleReconnect)
+      }
+    }
+  }, [socket])
+
+  // Clear session when game finishes
+  useEffect(() => {
+    if (gameState?.isGameFinished) {
+      clearGameSession()
+    }
+  }, [gameState?.isGameFinished])
 
   // Reset director submission state when phase changes
   useEffect(() => {
@@ -384,11 +431,19 @@ function DirectorGamePageComponent() {
   }
 
   if (!isConnected) {
+    const savedSession = getGameSession()
+    const isReconnectAttempt = savedSession && savedSession.gameCode === code && savedSession.isDirector
+
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="text-center">
-          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('game.connecting')}</h2>
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {isReconnecting || isReconnectAttempt ? t('game.reconnecting') || 'Reconnecting...' : t('game.connecting')}
+          </h2>
+          {isReconnectAttempt && (
+            <p className="text-gray-600">Restoring director session...</p>
+          )}
         </Card>
       </div>
     )

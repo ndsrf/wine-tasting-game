@@ -36,9 +36,9 @@ app.prepare().then(() => {
     transports: ['websocket', 'polling'],
     // Allow upgrade from polling to WebSocket
     allowUpgrades: true,
-    // Increase ping timeout for Cloudflare tunnels
-    pingTimeout: 60000,
-    pingInterval: 25000,
+    // Increase ping timeout for mobile devices (screen sleep, network switches)
+    pingTimeout: 180000, // 3 minutes - enough for screen sleep and network transitions
+    pingInterval: 25000, // Keep at 25s for quick detection when connection is active
     // Path for Socket.io (default is /socket.io)
     path: '/socket.io/',
   })
@@ -52,7 +52,7 @@ app.prepare().then(() => {
 
     socket.on('join-game', async (data) => {
       console.log('🎮 Join game:', data)
-      const { code, nickname, userId } = data
+      const { code, nickname, userId, playerId, isReconnect } = data
 
       socket.join(code)
 
@@ -126,6 +126,7 @@ app.prepare().then(() => {
             message: 'Director joined successfully',
             directorPlayer: directorPlayer
           })
+          console.log(`${isReconnect ? '🔄 Director reconnected' : '✅ Director joined'}: ${directorPlayer.nickname}`)
         } catch (dbError) {
           console.error('Error creating director player:', dbError)
           socket.emit('error', { message: 'Failed to join as director' })
@@ -133,7 +134,7 @@ app.prepare().then(() => {
           return
         }
       } else if (nickname) {
-        // Player joining - create in database
+        // Player joining or reconnecting
         const { PrismaClient } = require('@prisma/client')
         const prisma = new PrismaClient()
 
@@ -150,44 +151,82 @@ app.prepare().then(() => {
             return
           }
 
-          // Check if nickname is taken in database
-          const existingPlayer = game.players.find(p => p.nickname === nickname)
-          if (existingPlayer) {
-            socket.emit('error', { message: 'Nickname already taken' })
-            await prisma.$disconnect()
-            return
+          let player
+
+          // Check if this is a reconnection with playerId
+          if (playerId && isReconnect) {
+            player = game.players.find(p => p.id === playerId)
+            if (player) {
+              // Update session ID for reconnected player
+              await prisma.player.update({
+                where: { id: player.id },
+                data: { sessionId: socket.id }
+              })
+              console.log(`🔄 Player ${player.nickname} reconnected to game ${code}`)
+            }
           }
 
-          // Create player in database
-          const newPlayer = await prisma.player.create({
-            data: {
-              gameId: game.id,
-              nickname,
-              sessionId: socket.id,
+          // If not found by playerId, try to find by nickname (could be refresh or duplicate tab)
+          if (!player) {
+            player = game.players.find(p => p.nickname === nickname)
+          }
+
+          // If player exists with same nickname
+          if (player) {
+            // Update their session ID to the new socket
+            await prisma.player.update({
+              where: { id: player.id },
+              data: { sessionId: socket.id }
+            })
+            console.log(`🔄 Player ${player.nickname} ${isReconnect ? 'reconnected' : 'rejoined'} game ${code}`)
+
+            // Update in-memory state
+            const memoryPlayerIndex = gameState.players.findIndex(p => p.id === player.id)
+            if (memoryPlayerIndex === -1) {
+              // Player not in memory, add them
+              gameState.players.push({
+                id: player.id,
+                nickname: player.nickname,
+                gameId: code,
+                score: player.score
+              })
+              gameStates.set(code, gameState)
+            }
+          } else {
+            // New player joining
+            player = await prisma.player.create({
+              data: {
+                gameId: game.id,
+                nickname,
+                sessionId: socket.id,
+                score: 0
+              }
+            })
+            console.log(`✅ New player ${player.nickname} joined game ${code}`)
+
+            // Add to in-memory state
+            const memoryPlayer = {
+              id: player.id,
+              nickname: player.nickname,
+              gameId: code,
               score: 0
             }
-          })
+            gameState.players.push(memoryPlayer)
+            gameStates.set(code, gameState)
+
+            // Notify other players only for new joins, not reconnections
+            socket.to(code).emit('player-joined', {
+              player: player
+            })
+          }
 
           await prisma.$disconnect()
 
-          // Add to in-memory state
-          const memoryPlayer = {
-            id: newPlayer.id, // Use database ID, not socket ID
-            nickname: newPlayer.nickname,
-            gameId: code,
-            score: 0
-          }
-          gameState.players.push(memoryPlayer)
-          gameStates.set(code, gameState)
-
           socket.emit('joined-as-player', {
-            player: newPlayer,
+            player: player,
             message: 'Player joined successfully'
           })
-          socket.to(code).emit('player-joined', {
-            player: newPlayer
-          })
-          console.log(`✅ Player ${nickname} (${newPlayer.id}) added to database and memory. Total players: ${gameState.players.length}`)
+          console.log(`Total players in game ${code}: ${gameState.players.length}`)
         } catch (dbError) {
           console.error('Error creating player:', dbError)
           socket.emit('error', { message: 'Failed to join game' })
