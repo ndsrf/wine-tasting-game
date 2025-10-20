@@ -31,12 +31,13 @@ function GamePageComponent() {
   const { isConnected, isReconnecting, joinGame, submitAnswer, socket } = useSocket({
     onGameState: (state) => setGameState(state),
     onPlayerJoined: (newPlayer) => {
-      if (gameState) {
-        setGameState({
-          ...gameState,
-          players: [...gameState.players, newPlayer]
-        })
-      }
+      setGameState((prevState) => {
+        if (!prevState) return prevState
+        return {
+          ...prevState,
+          players: [...prevState.players, newPlayer]
+        }
+      })
     },
     onJoinedAsPlayer: (data) => {
       console.log('Joined as player:', data)
@@ -58,12 +59,13 @@ function GamePageComponent() {
     },
     onGameStarted: (state) => setGameState(state),
     onPhaseChanged: (data) => {
-      if (gameState) {
-        setGameState({
-          ...gameState,
+      setGameState((prevState) => {
+        if (!prevState) return prevState
+        return {
+          ...prevState,
           currentPhase: (typeof data === 'object' && data.phase ? data.phase : data) as any
-        })
-      }
+        }
+      })
     },
     onWineChanged: (state) => setGameState(state),
     onAnswerSubmitted: (data) => {
