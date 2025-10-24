@@ -165,11 +165,20 @@ function GamePageComponent() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             {isReconnecting || isReconnectAttempt ? t('game.reconnecting') || 'Reconnecting...' : t('game.connecting')}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             {isReconnectAttempt
               ? `Restoring your session as ${savedSession.nickname}...`
               : t('game.connectingDescription')}
           </p>
+          {(isReconnecting || isReconnectAttempt) && (
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="mt-2"
+            >
+              {t('game.refreshPage')}
+            </Button>
+          )}
         </Card>
       </div>
     )
