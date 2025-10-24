@@ -442,7 +442,16 @@ function DirectorGamePageComponent() {
             {isReconnecting || isReconnectAttempt ? t('game.reconnecting') || 'Reconnecting...' : t('game.connecting')}
           </h2>
           {isReconnectAttempt && (
-            <p className="text-gray-600">Restoring director session...</p>
+            <p className="text-gray-600 mb-4">Restoring director session...</p>
+          )}
+          {(isReconnecting || isReconnectAttempt) && (
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="mt-2"
+            >
+              {t('game.refreshPage')}
+            </Button>
           )}
         </Card>
       </div>
