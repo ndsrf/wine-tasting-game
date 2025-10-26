@@ -1,5 +1,7 @@
 # Wine Tasting Game
 
+**Version:** 1.0.0
+
 A multiplayer web application for conducting wine tasting sessions where players guess wine characteristics across visual, smell, and taste categories.
 
 ## Features
