@@ -39,9 +39,19 @@ function DirectorGamePageComponent() {
   const [showBackConfirm, setShowBackConfirm] = useState(false)
   // Track which players have submitted for each phase: { playerId: { VISUAL: true, SMELL: false, TASTE: false } }
   const [submittedPlayers, setSubmittedPlayers] = useState<Record<string, Record<CharacteristicType, boolean>>>({})
+  // Wake lock to prevent screen sleep on mobile
+  const wakeLockRef = useRef<any>(null)
+  const lastVisibilityChangeRef = useRef<number>(Date.now())
 
   const { isConnected, isReconnecting, joinGame, startGame, changePhase, nextWine, submitAnswer, finishGame, socket } = useSocket({
     onGameState: (state) => {
+      console.log('[Director] Received game-state event:', {
+        currentWine: state.currentWine,
+        currentPhase: state.currentPhase,
+        isGameStarted: state.isGameStarted,
+        isGameFinished: state.isGameFinished,
+        playerCount: state.players?.length
+      })
       // Always preserve the game object and merge with socket state
       setGameState(prevState => {
         // If we have previous state with game data, preserve it
@@ -89,7 +99,12 @@ function DirectorGamePageComponent() {
       })
     },
     onJoinedAsDirector: (data) => {
-      console.log('Director joined:', data)
+      console.log('[Director] Joined as director:', {
+        directorPlayerId: data.directorPlayer?.id,
+        gameStatus: data.game?.status,
+        socketId: socket?.id,
+        timestamp: new Date().toISOString()
+      })
 
       // Save session for reconnection
       if (user) {
@@ -128,13 +143,22 @@ function DirectorGamePageComponent() {
       })
     },
     onPhaseChanged: (data) => {
+      const newPhase = (typeof data === 'object' && data.phase ? data.phase : data) as CharacteristicType
+      console.log('[Director] Received phase-changed event:', {
+        newPhase,
+        timestamp: new Date().toISOString(),
+        socketId: socket?.id,
+        connected: socket?.connected
+      })
       setGameState(prevState => {
         if (prevState) {
+          console.log('[Director] Updating phase from', prevState.currentPhase, 'to', newPhase)
           return {
             ...prevState,
-            currentPhase: (typeof data === 'object' && data.phase ? data.phase : data) as CharacteristicType
+            currentPhase: newPhase
           }
         }
+        console.warn('[Director] Cannot update phase - no previous state')
         return prevState
       })
     },
@@ -181,7 +205,117 @@ function DirectorGamePageComponent() {
 
   useEffect(() => {
     setMounted(true)
+
+    // Load Eruda for mobile debugging
+    if (typeof window !== 'undefined') {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/eruda'
+      script.onload = () => {
+        if ((window as any).eruda) {
+          (window as any).eruda.init()
+          console.log('[Director] Eruda mobile console initialized - tap the green icon to view logs')
+        }
+      }
+      document.body.appendChild(script)
+    }
   }, [])
+
+  // Wake Lock API to prevent screen sleep on director mobile devices
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+          console.log('[Director] Wake Lock activated - screen will stay on')
+
+          wakeLockRef.current.addEventListener('release', () => {
+            console.log('[Director] Wake Lock released')
+          })
+        } else {
+          console.log('[Director] Wake Lock API not supported on this device')
+        }
+      } catch (err: any) {
+        console.error('[Director] Wake Lock request failed:', err.message)
+      }
+    }
+
+    requestWakeLock()
+
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().then(() => {
+          console.log('[Director] Wake Lock released on cleanup')
+        })
+      }
+    }
+  }, [mounted])
+
+  // Handle visibility change and re-request wake lock / check connection
+  useEffect(() => {
+    if (!mounted || typeof document === 'undefined') return
+
+    const handleVisibilityChange = () => {
+      const now = Date.now()
+      const timeSinceLastChange = now - lastVisibilityChangeRef.current
+      lastVisibilityChangeRef.current = now
+
+      if (document.visibilityState === 'visible') {
+        console.log(`[Director] Page became visible after ${timeSinceLastChange}ms hidden`)
+
+        // Re-request wake lock if it was released
+        if (!wakeLockRef.current || wakeLockRef.current.released) {
+          console.log('[Director] Re-requesting wake lock after visibility change')
+          if ('wakeLock' in navigator) {
+            (navigator as any).wakeLock.request('screen')
+              .then((lock: any) => {
+                wakeLockRef.current = lock
+                console.log('[Director] Wake Lock re-activated')
+              })
+              .catch((err: any) => {
+                console.error('[Director] Wake Lock re-request failed:', err.message)
+              })
+          }
+        }
+
+        // Check socket connection status
+        if (socket) {
+          console.log('[Director] Checking socket connection...', {
+            connected: socket.connected,
+            id: socket.id,
+            timeSinceLastChange
+          })
+
+          // If page was hidden for more than 10 seconds and socket is connected, verify room membership
+          if (timeSinceLastChange > 10000 && socket.connected && user && code) {
+            console.log('[Director] Page was hidden >10s, re-joining room to ensure event delivery')
+            // Force re-join to ensure we're in the room
+            hasJoinedSocketRef.current = false
+            joinGame({
+              code,
+              userId: user.id,
+              isReconnect: true
+            })
+            hasJoinedSocketRef.current = true
+          }
+
+          // If socket is not connected, it should auto-reconnect via Socket.io
+          if (!socket.connected) {
+            console.log('[Director] Socket disconnected, waiting for auto-reconnect...')
+          }
+        }
+      } else {
+        console.log('[Director] Page became hidden')
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [mounted, socket, user, code, joinGame])
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -361,7 +495,16 @@ function DirectorGamePageComponent() {
 
   const handleChangePhase = (phase: CharacteristicType) => {
     if (user && code) {
+      console.log('[Director] Requesting phase change:', {
+        from: gameState?.currentPhase,
+        to: phase,
+        socketConnected: socket?.connected,
+        socketId: socket?.id,
+        timestamp: new Date().toISOString()
+      })
       changePhase({ code, userId: user.id, phase })
+    } else {
+      console.error('[Director] Cannot change phase - missing user or code:', { user: !!user, code: !!code })
     }
   }
 
