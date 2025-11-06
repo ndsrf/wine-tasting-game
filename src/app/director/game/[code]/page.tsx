@@ -205,6 +205,19 @@ function DirectorGamePageComponent() {
 
   useEffect(() => {
     setMounted(true)
+
+    // Load Eruda for mobile debugging
+    if (typeof window !== 'undefined') {
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/eruda'
+      script.onload = () => {
+        if ((window as any).eruda) {
+          (window as any).eruda.init()
+          console.log('[Director] Eruda mobile console initialized - tap the green icon to view logs')
+        }
+      }
+      document.body.appendChild(script)
+    }
   }, [])
 
   // Wake Lock API to prevent screen sleep on director mobile devices
