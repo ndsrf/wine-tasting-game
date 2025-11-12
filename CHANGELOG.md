@@ -1,45 +1,54 @@
-# Changelog
+## 1.4.0 (2025-11-12)
 
-All notable changes to this project will be documented in this file.
+* chore: bump version to 1.3.0 ([9b6cb9d](https://github.com/ndsrf/wine-tasting-game/commit/9b6cb9d))
+* chore: bump version to 1.4.0 ([537088f](https://github.com/ndsrf/wine-tasting-game/commit/537088f))
+* feat(game): add wine tasting history with multilingual support ([8786d4f](https://github.com/ndsrf/wine-tasting-game/commit/8786d4f))
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-10-26
 
-### Added
-- 🍷 Initial release of Wine Tasting Game
-- 👥 Multiplayer wine tasting functionality with Director-Player model
-- 🎯 Three difficulty levels: Novice, Intermediate, Sommelier
-- 🔄 Real-time multiplayer with Socket.io
-- 🤖 AI-powered wine characteristics generation using OpenAI
-- 🔐 JWT authentication for directors
-- 🎮 Complete game flow from creation to results
-- 📱 Progressive Web App (PWA) support
-- 🌍 Multi-language support (English, Spanish, French, German)
-- 🎨 Modern UI with Tailwind CSS
-- 🗄️ PostgreSQL database with Prisma ORM
-- 💾 Redis caching for performance
-- 🐳 Docker support with multi-platform builds
-- 📊 Real-time scoring and leaderboards
-- 🔗 QR code generation for easy game joining
-- 📈 Director dashboard with game management
-- 🎪 Wake Lock API for mobile devices to prevent screen timeout
+## <small>1.2.1 (2025-11-12)</small>
 
-### Technical
-- Next.js 14 with TypeScript
-- Custom server.js for Socket.io integration
-- Prisma database schema for Users, Games, Wines, Players, Answers
-- Socket.io events: join-game, start-game, change-phase, next-wine, submit-answer
-- Environment-based configuration
-- GitHub Actions CI/CD pipeline
-- Automated Docker image builds
+* chore: bump version to 1.1.0 ([7e86222](https://github.com/ndsrf/wine-tasting-game/commit/7e86222))
+* chore: bump version to 1.2.0 ([8c1c2f2](https://github.com/ndsrf/wine-tasting-game/commit/8c1c2f2))
+* chore: bump version to 1.2.1 ([21f42fd](https://github.com/ndsrf/wine-tasting-game/commit/21f42fd))
+* build(deps): update package-lock.json for new versioning dependencies ([001c6a9](https://github.com/ndsrf/wine-tasting-game/commit/001c6a9))
+* fix(ci): remove invalid pipe operators from release workflow ([af49d40](https://github.com/ndsrf/wine-tasting-game/commit/af49d40))
+* feat(ci): implement comprehensive versioning system with automated releases ([ae059b2](https://github.com/ndsrf/wine-tasting-game/commit/ae059b2))
+* Add Eruda mobile console to director page for on-device debugging ([0c9a9e3](https://github.com/ndsrf/wine-tasting-game/commit/0c9a9e3))
+* Add explicit build command to force clean Vercel build ([9079ac7](https://github.com/ndsrf/wine-tasting-game/commit/9079ac7))
+* Add hint generation feature and wine explanations ([f8e0c8e](https://github.com/ndsrf/wine-tasting-game/commit/f8e0c8e))
+* Add OpenSSL to docker image ([9f7f4ff](https://github.com/ndsrf/wine-tasting-game/commit/9f7f4ff))
+* Add reconnect when the player loses connectivity ([2294036](https://github.com/ndsrf/wine-tasting-game/commit/2294036))
+* Add refresh button to reconnecting screen ([6d16db2](https://github.com/ndsrf/wine-tasting-game/commit/6d16db2))
+* Add version tracking system with v1.0.0 ([2aaf086](https://github.com/ndsrf/wine-tasting-game/commit/2aaf086))
+* Added i18n (ES, FR) ([6fa4c80](https://github.com/ndsrf/wine-tasting-game/commit/6fa4c80))
+* Docker deployment & github actions ([c53c07e](https://github.com/ndsrf/wine-tasting-game/commit/c53c07e))
+* Enhance CORS and WebSocket configurations for Cloudflare compatibility ([20c37fb](https://github.com/ndsrf/wine-tasting-game/commit/20c37fb))
+* Enhance game reconnection logic and session management ([5a3afef](https://github.com/ndsrf/wine-tasting-game/commit/5a3afef))
+* First MVP ([8872989](https://github.com/ndsrf/wine-tasting-game/commit/8872989))
+* Fix director page runtime errors with defensive coding ([449f5de](https://github.com/ndsrf/wine-tasting-game/commit/449f5de))
+* Fix github action (first try) ([144939d](https://github.com/ndsrf/wine-tasting-game/commit/144939d))
+* Fix GitHub Actions attestation permission error ([3804832](https://github.com/ndsrf/wine-tasting-game/commit/3804832))
+* Fix github actions issue ([7e99f58](https://github.com/ndsrf/wine-tasting-game/commit/7e99f58))
+* Fix Google Auth - now working. ([a0ea9b1](https://github.com/ndsrf/wine-tasting-game/commit/a0ea9b1))
+* Fix Google OAuth for Docker deployment ([3d7009b](https://github.com/ndsrf/wine-tasting-game/commit/3d7009b))
+* Fix invalid Docker tag format in GitHub Actions workflow ([34eca44](https://github.com/ndsrf/wine-tasting-game/commit/34eca44))
+* Fix mobile screen timeout issue for director with Wake Lock API and enhanced reconnection ([d6c26ee](https://github.com/ndsrf/wine-tasting-game/commit/d6c26ee))
+* Fix package.json syntax error ([1d738d2](https://github.com/ndsrf/wine-tasting-game/commit/1d738d2))
+* Fix Socket.io runtime errors and game state handling ([2b18231](https://github.com/ndsrf/wine-tasting-game/commit/2b18231))
+* Fix Vercel deployment config ([fa28268](https://github.com/ndsrf/wine-tasting-game/commit/fa28268))
+* Initial Wine Tasting Game implementation ([89f9623](https://github.com/ndsrf/wine-tasting-game/commit/89f9623))
+* Issues with Prisma when running on proxmox ([0174c4a](https://github.com/ndsrf/wine-tasting-game/commit/0174c4a))
+* More fixes ([22bffa9](https://github.com/ndsrf/wine-tasting-game/commit/22bffa9))
+* Optimize finish button visibility in DirectorGamePageComponent ([18692c3](https://github.com/ndsrf/wine-tasting-game/commit/18692c3))
+* Refactor homepage text for internationalization and enhance game creation validation ([1637155](https://github.com/ndsrf/wine-tasting-game/commit/1637155))
+* The Dockerfile has been updated to: ([e55de9a](https://github.com/ndsrf/wine-tasting-game/commit/e55de9a))
+* Update development environment and socket handling ([3c631d6](https://github.com/ndsrf/wine-tasting-game/commit/3c631d6))
+* Update environment configuration and enhance QR code functionality ([87c8b9e](https://github.com/ndsrf/wine-tasting-game/commit/87c8b9e))
+* Update footer copyright year to be dynamic ([484bcbb](https://github.com/ndsrf/wine-tasting-game/commit/484bcbb))
+* Update homepage design and animations ([f2b59e7](https://github.com/ndsrf/wine-tasting-game/commit/f2b59e7))
+* Update README.md with detailed Docker deployment instructions ([6a5846f](https://github.com/ndsrf/wine-tasting-game/commit/6a5846f))
+* Vercel fixes and multiplayer dev fixes ([27aff61](https://github.com/ndsrf/wine-tasting-game/commit/27aff61))
 
-### Security
-- JWT token authentication
-- Secure headers configuration
-- Input validation with Zod
-- SQL injection prevention with Prisma
-- XSS protection
 
-[1.0.0]: https://github.com/ndsrf/wine-tasting-game/releases/tag/v1.0.0
+
