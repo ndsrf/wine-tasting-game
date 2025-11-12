@@ -1,6 +1,6 @@
 {
   "name": "wine-tasting-game",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Multiplayer wine tasting game application",
   "private": true,
   "scripts": {
@@ -15,7 +15,14 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "version:patch": "npm version patch -m 'chore: bump version to %s'",
+    "version:minor": "npm version minor -m 'chore: bump version to %s'",
+    "version:major": "npm version major -m 'chore: bump version to %s'",
+    "version:current": "echo $npm_package_version",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.0",
@@ -46,6 +53,8 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "@types/bcryptjs": "2.4.6",
     "@types/jsonwebtoken": "9.0.6",
     "@types/node": "22.4.1",
@@ -54,8 +63,10 @@
     "@typescript-eslint/eslint-plugin": "8.2.0",
     "@typescript-eslint/parser": "8.2.0",
     "autoprefixer": "10.4.20",
+    "conventional-changelog-cli": "^5.0.0",
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
+    "husky": "^9.0.0",
     "postcss": "8.4.41",
     "prisma": "5.17.0",
     "tailwindcss": "3.4.9"

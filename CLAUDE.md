@@ -39,6 +39,125 @@ npm run db:migrate   # Run migrations
 npm run db:studio    # Open Prisma Studio
 ```
 
+### Versioning
+```bash
+npm run version:patch     # Bump patch version (1.0.0 -> 1.0.1)
+npm run version:minor     # Bump minor version (1.0.0 -> 1.1.0)
+npm run version:major     # Bump major version (1.0.0 -> 2.0.0)
+npm run version:current   # Show current version
+npm run changelog         # Generate changelog for new version
+npm run changelog:all     # Regenerate entire changelog
+```
+
+## Commit Message Convention
+
+**IMPORTANT:** This project uses [Conventional Commits](https://www.conventionalcommits.org/) specification. All commit messages MUST follow this format:
+
+### Format
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types (REQUIRED)
+- **feat**: A new feature (triggers MINOR version bump)
+- **fix**: A bug fix (triggers PATCH version bump)
+- **docs**: Documentation only changes
+- **style**: Changes that don't affect code meaning (formatting, white-space, etc.)
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **perf**: Performance improvement
+- **test**: Adding or updating tests
+- **build**: Changes to build system or dependencies
+- **ci**: Changes to CI configuration files and scripts
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+### Scope (Optional)
+The scope specifies the part of the codebase affected:
+- `auth`: Authentication related
+- `game`: Game logic
+- `ui`: User interface
+- `api`: API endpoints
+- `db`: Database related
+- `socket`: Socket.io related
+- `i18n`: Internationalization
+- etc.
+
+### Subject (REQUIRED)
+- Use imperative, present tense: "change" not "changed" nor "changes"
+- Don't capitalize first letter
+- No period (.) at the end
+- Max 100 characters
+
+### Breaking Changes
+For breaking changes that trigger MAJOR version bump:
+```
+feat!: remove support for Node 16
+
+BREAKING CHANGE: Node 18 is now the minimum required version
+```
+
+### Examples
+
+✅ **GOOD:**
+```
+feat(game): add sommelier difficulty level
+fix(auth): resolve JWT token expiration issue
+docs(readme): update installation instructions
+refactor(socket): simplify event handler logic
+perf(api): optimize database queries for games list
+test(game): add unit tests for wine generation
+ci(actions): add automated release workflow
+```
+
+❌ **BAD:**
+```
+Added new feature                    # Missing type and unclear
+Fixed bug                            # Too vague
+Update code                          # No type, unclear what changed
+feat: Added new feature.             # Should be imperative mood, no period
+FIX: bug fix                         # Type should be lowercase
+```
+
+### Why This Matters
+1. **Automated Changelog**: Changelog is auto-generated from commit messages
+2. **Version Bumping**: Commit types determine version increments
+3. **Release Notes**: GitHub releases use commit messages
+4. **Code History**: Clear, searchable commit history
+5. **CI/CD**: Workflows trigger based on commit types
+
+### Enforcement
+- Git hooks validate commit messages before commit
+- CI pipeline checks commit format on pull requests
+- Invalid commits will be rejected
+
+### Version Release Process
+1. Make changes with conventional commits
+2. When ready to release: `npm run version:patch` (or minor/major)
+3. This will:
+   - Update version in package.json
+   - Create a git commit
+   - Create a git tag (e.g., v1.0.1)
+   - Push to GitHub
+4. GitHub Actions automatically:
+   - Generates changelog
+   - Creates GitHub Release
+   - Builds and publishes Docker images
+   - Updates documentation
+
+### Quick Reference
+```bash
+# Examples for Claude Code
+git commit -m "feat(game): add wine pairing suggestions"
+git commit -m "fix(socket): resolve connection timeout on mobile"
+git commit -m "docs(api): add JSDoc comments to game endpoints"
+git commit -m "refactor(ui): extract WineCard component"
+git commit -m "perf(db): add index on game code column"
+```
+
 ## Architecture Notes
 
 ### Authentication

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const packageJson = require('./package.json')
+
 const nextConfig = {
   logging: {
     fetches: {
@@ -18,7 +20,10 @@ const nextConfig = {
     unoptimized: false
   },
   env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || `http://localhost:${process.env.PORT || 3000}`
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || `http://localhost:${process.env.PORT || 3000}`,
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
+    NEXT_PUBLIC_GIT_COMMIT: process.env.GITHUB_SHA || process.env.GIT_COMMIT || 'dev'
   },
   async headers() {
     return [
