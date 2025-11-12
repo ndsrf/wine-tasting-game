@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { Wine } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { VersionModal } from './VersionModal'
-
-const APP_VERSION = '1.0.0'
+import { APP_VERSION } from '@/lib/version'
 
 export function Footer() {
   const { t } = useTranslation()

@@ -268,15 +268,25 @@ pm2 startup
 
 ### Scripts
 
+#### Development
 - `npm run dev` - Development server with hot reload
 - `npm run build` - Production build
 - `npm run start` - Production server
 - `npm run lint` - ESLint check
 - `npm run typecheck` - TypeScript type checking
+
+#### Database
 - `npm run db:generate` - Generate Prisma client
 - `npm run db:push` - Push schema changes to database
 - `npm run db:migrate` - Run database migrations
 - `npm run db:studio` - Open Prisma Studio
+
+#### Versioning
+- `npm run version:patch` - Bump patch version (1.0.0 → 1.0.1)
+- `npm run version:minor` - Bump minor version (1.0.0 → 1.1.0)
+- `npm run version:major` - Bump major version (1.0.0 → 2.0.0)
+- `npm run changelog` - Generate changelog for new version
+- `npm run changelog:all` - Regenerate entire changelog
 
 ### Project Structure
 
@@ -300,14 +310,83 @@ src/
 └── types/             # TypeScript type definitions
 ```
 
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH):
+- **MAJOR**: Breaking changes
+- **MINOR**: New features (backwards-compatible)
+- **PATCH**: Bug fixes (backwards-compatible)
+
+### Version Information
+- Current version displayed in UI footer (click for history)
+- API endpoint: `GET /api/version`
+- Docker images tagged with version numbers
+
+### Release Process
+Releases are automated via GitHub Actions:
+1. Commit changes using [Conventional Commits](#commit-conventions)
+2. Run `npm run version:patch|minor|major`
+3. Push tags to GitHub
+4. GitHub Actions automatically:
+   - Generates changelog
+   - Creates GitHub Release
+   - Builds and publishes Docker images
+   - Updates documentation
+
+See [VERSIONING.md](VERSIONING.md) for detailed information.
+
 ## Contributing
+
+### Commit Conventions
+
+**This project uses [Conventional Commits](https://www.conventionalcommits.org/).** All commit messages must follow this format:
+
+```
+<type>(<scope>): <subject>
+```
+
+**Types:**
+- `feat`: New feature (→ MINOR version bump)
+- `fix`: Bug fix (→ PATCH version bump)
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `perf`: Performance improvements
+- `test`: Test changes
+- `build`: Build system changes
+- `ci`: CI/CD changes
+- `chore`: Maintenance tasks
+
+**Examples:**
+```bash
+feat(game): add wine pairing suggestions
+fix(auth): resolve JWT token expiration
+docs(readme): update deployment instructions
+refactor(socket): simplify event handlers
+```
+
+For breaking changes, add `!` after type:
+```bash
+feat!: remove support for Node 16
+
+BREAKING CHANGE: Node 18 is now required
+```
+
+See [CLAUDE.md](CLAUDE.md) for detailed commit guidelines.
+
+### Development Workflow
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make changes and add tests
-4. Commit changes: `git commit -am 'Add feature'`
+4. Commit using conventional commits: `git commit -m "feat(scope): description"`
 5. Push to branch: `git push origin feature-name`
 6. Submit a pull request
+
+### Commit Message Validation
+- Git hooks validate commit messages locally
+- CI pipeline checks commit format on PRs
+- Invalid commits will be rejected
 
 ## License
 

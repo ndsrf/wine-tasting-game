@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          npm run changelog:all
+
+          # Extract the latest release notes
+          if [ -f CHANGELOG.md ]; then
+            # Get content between first two headers (latest version)
+            CHANGELOG=$(awk '/^#[^#]/{if(++count==2)exit}count==1' CHANGELOG.md)
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changelog=Release ${{ steps.version.outputs.tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update VERSION.md
+        run: |
+          # Create updated VERSION.md
+          cat > VERSION.md << 'EOF'
+          # Wine Tasting Game - Version History
+
+          ## Version ${{ steps.version.outputs.version }}
+          **Released:** $(date +"%B %d, %Y")
+          **Status:** Stable
+
+          ### What's New
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+          ### Technical Stack
+          - Next.js 14 with TypeScript
+          - Tailwind CSS for styling
+          - Prisma with PostgreSQL
+          - Socket.io for real-time communication
+          - OpenAI API for wine characteristics
+          - Redis for caching
+
+          ### Features
+          - 🍷 Multiplayer wine tasting game
+          - 👥 Director-Player model
+          - 🎯 Three difficulty levels: Novice, Intermediate, Sommelier
+          - 🔄 Real-time multiplayer with Socket.io
+          - 🤖 AI-powered wine characteristics
+          - 📱 Progressive Web App (PWA) support
+          - 🌍 Multi-language support (English, Spanish, French, German)
+
+          ### Deployment
+          - Docker support with multi-platform builds (amd64, arm64)
+          - Custom server.js for Socket.io integration
+          - Environment-based configuration
+          EOF
+
+          # Copy to public directory
+          cp VERSION.md public/VERSION.md
+
+      - name: Commit updated files
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add CHANGELOG.md VERSION.md public/VERSION.md
+          git diff --staged --quiet || git commit -m "chore: update changelog and version files for ${{ steps.version.outputs.tag }}"
+          git push origin HEAD:main
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## 🍷 Wine Tasting Game ${{ steps.version.outputs.tag }}
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+
+            ### 📦 Docker Images
+
+            Docker images for this release are available at:
+            ```
+            ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version }}
+            ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version | split('.') | slice(0, 2) | join('.') }}
+            ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version | split('.') | first }}
+            ghcr.io/ndsrf/wine-tasting-game:latest
+            ```
+
+            ### 🚀 Quick Start
+
+            ```bash
+            docker pull ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version }}
+            docker run -p 3000:3000 ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version }}
+            ```
+
+            ### 📝 Full Changelog
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for complete details.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Announce release
+        run: |
+          echo "✅ Release ${{ steps.version.outputs.tag }} created successfully!"
+          echo "🐳 Docker images will be built by the docker-build workflow"
+          echo "📦 Available at: ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version }}"
