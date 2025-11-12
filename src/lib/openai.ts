@@ -7,6 +7,13 @@ interface WineInfo {
   year: number;
 }
 
+export interface CanonicalWineInfo {
+  canonicalName: string;
+  year: number;
+  producer?: string;
+  region?: string;
+}
+
 const CHARACTERISTIC_COUNTS = {
   NOVICE: 3,
   INTERMEDIATE: 4,
@@ -17,7 +24,14 @@ export async function generateWineCharacteristics(
   wines: WineInfo[],
   difficulty: Difficulty,
   language: string = 'en'
-): Promise<{ wines: Array<{ wine: WineInfo; characteristics: WineCharacteristics }>, similarityWarning?: string }> {
+): Promise<{
+  wines: Array<{
+    wine: WineInfo;
+    characteristics: WineCharacteristics;
+    canonicalInfo: CanonicalWineInfo;
+  }>,
+  similarityWarning?: string
+}> {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -41,10 +55,15 @@ IMPORTANT: All characteristic names MUST be in English exactly as they appear in
 
 Make sure the characteristics are realistic for each wine type and vintage. Ensure there are meaningful differences between wines to make the guessing game challenging but fair.
 
-For each wine, also provide a confidence score (0-100) indicating how certain you are about the wine's identity and ability to provide accurate characteristics. Consider:
-- Whether the wine name is recognizable and specific
-- Whether the vintage year is appropriate for that wine
-- Whether you have enough information to provide accurate characteristics
+For each wine, also provide:
+1. A confidence score (0-100) indicating how certain you are about the wine's identity and ability to provide accurate characteristics. Consider:
+   - Whether the wine name is recognizable and specific
+   - Whether the vintage year is appropriate for that wine
+   - Whether you have enough information to provide accurate characteristics
+2. Canonical wine information:
+   - canonicalName: The proper, well-known name of the wine (e.g., "Château Margaux" instead of "margaux", "Barolo Riserva" instead of "barolo")
+   - producer: The winery or producer name if identifiable
+   - region: The wine region (e.g., "Bordeaux", "Tuscany", "Napa Valley")
 
 If the wine name is vague, misspelled, or you're uncertain about its identity, assign a lower confidence score.
 
@@ -55,6 +74,9 @@ Return the response in this exact JSON format:
       "name": "Wine Name",
       "year": 2020,
       "confidence": 95,
+      "canonicalName": "Proper Wine Name",
+      "producer": "Winery Name",
+      "region": "Wine Region",
       "characteristics": {
         "visual": ["characteristic1", "characteristic2", "characteristic3"],
         "smell": ["characteristic1", "characteristic2", "characteristic3"],
@@ -108,9 +130,15 @@ Return the response in this exact JSON format:
     const processedWines = result.wines.map((wineData: any, index: number) => ({
       wine: wines[index],
       characteristics: wineData.characteristics,
+      canonicalInfo: {
+        canonicalName: wineData.canonicalName || wines[index].name,
+        year: wines[index].year,
+        producer: wineData.producer || undefined,
+        region: wineData.region || undefined,
+      },
     }))
 
-    const similarityWarning = checkSimilarity(processedWines.map((w: { wine: WineInfo; characteristics: WineCharacteristics }) => w.characteristics))
+    const similarityWarning = checkSimilarity(processedWines.map((w: any) => w.characteristics))
 
     return {
       wines: processedWines,
@@ -128,6 +156,12 @@ Return the response in this exact JSON format:
       wines: wines.map(wine => ({
         wine,
         characteristics: generateFallbackCharacteristics(difficulty),
+        canonicalInfo: {
+          canonicalName: wine.name,
+          year: wine.year,
+          producer: undefined,
+          region: undefined,
+        },
       })),
       similarityWarning: 'Using fallback characteristics due to API error.',
     }

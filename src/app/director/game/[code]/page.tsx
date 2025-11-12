@@ -16,6 +16,7 @@ import '@/lib/i18n'
 import { normalizeCharacteristicToEnglish } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { saveGameSession, getGameSession, clearGameSession } from '@/lib/session-storage'
+import RateWineModal from '@/components/RateWineModal'
 
 function DirectorGamePageComponent() {
   const params = useParams()
@@ -880,10 +881,51 @@ function DirectorGamePageComponent() {
 
 function DirectorResults({ gameState, code }: { gameState: GameState; code: string }) {
   const { t } = useTranslation()
+  const { isAuthenticated } = useAuth()
   const [results, setResults] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showRateModal, setShowRateModal] = useState(false)
+  const [selectedWine, setSelectedWine] = useState<any>(null)
   const retryCountRef = useRef(0)
+
+  // Handler for rating wine
+  const handleRateWine = (wine: any) => {
+    setSelectedWine(wine)
+    setShowRateModal(true)
+  }
+
+  const handleSubmitRating = async (data: {
+    rating: number
+    location?: string
+    occasion?: string
+    comments?: string
+  }) => {
+    if (!selectedWine) return
+
+    try {
+      const response = await authenticatedFetch('/api/tastings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wineId: selectedWine.id,
+          gameId: gameState.game?.id,
+          ...data,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save rating')
+      }
+
+      alert('Wine rating saved successfully!')
+    } catch (error) {
+      console.error('Error saving rating:', error)
+      throw error
+    }
+  }
 
   // Function to translate wine characteristic values
   const translateWineChar = (value: string | undefined): string => {
@@ -1119,6 +1161,53 @@ function DirectorResults({ gameState, code }: { gameState: GameState; code: stri
           </table>
         </div>
       </Card>
+
+      {/* Rate Wines Section */}
+      {isAuthenticated && results?.wines && results.wines.length > 0 && (
+        <Card>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center">
+            <span className="mr-3">⭐</span>
+            {t('rateWine.rateTheWines')}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {t('rateWine.description')}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {results.wines.map((wine: any) => (
+              <button
+                key={wine.id}
+                onClick={() => handleRateWine(wine)}
+                className="flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
+              >
+                <div className="text-left">
+                  <p className="font-semibold text-purple-900">
+                    {wine.name} ({wine.year})
+                  </p>
+                  <p className="text-sm text-purple-700">{t('rateWine.clickToRate')}</p>
+                </div>
+                <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Rate Wine Modal */}
+      {showRateModal && selectedWine && (
+        <RateWineModal
+          wineName={selectedWine.name}
+          wineYear={selectedWine.year}
+          wineId={selectedWine.id}
+          gameId={gameState.game?.id}
+          onClose={() => {
+            setShowRateModal(false)
+            setSelectedWine(null)
+          }}
+          onSubmit={handleSubmitRating}
+        />
+      )}
     </>
   )
 }

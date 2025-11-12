@@ -17,7 +17,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  games Game[]
+  games    Game[]
+  tastings TastingHistory[]
 
   @@map("users")
 }
@@ -32,23 +33,27 @@ model Game {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  director User     @relation(fields: [directorId], references: [id], onDelete: Cascade)
+  director User             @relation(fields: [directorId], references: [id], onDelete: Cascade)
   wines    Wine[]
   players  Player[]
+  tastings TastingHistory[]
 
   @@map("games")
 }
 
 model Wine {
-  id             String @id @default(cuid())
-  gameId         String
-  number         Int
-  name           String
-  year           Int
+  id              String  @id @default(cuid())
+  gameId          String
+  number          Int
+  name            String
+  year            Int
   characteristics Json
+  wineCatalogId   String?
 
-  game    Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  answers Answer[]
+  game     Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  catalog  WineCatalog?     @relation(fields: [wineCatalogId], references: [id])
+  answers  Answer[]
+  tastings TastingHistory[]
 
   @@unique([gameId, number])
   @@map("wines")
@@ -84,6 +89,46 @@ model Answer {
 
   @@unique([playerId, wineId, characteristicType])
   @@map("answers")
+}
+
+model WineCatalog {
+  id       String   @id @default(cuid())
+  name     String
+  year     Int
+  producer String?
+  region   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wines    Wine[]
+  tastings TastingHistory[]
+
+  @@unique([name, year])
+  @@index([name])
+  @@map("wine_catalog")
+}
+
+model TastingHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  wineCatalogId String
+  gameId        String?
+  wineId        String?
+  rating        Int
+  comments      String?  @db.Text
+  location      String?
+  occasion      String?
+  createdAt     DateTime @default(now())
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wine     WineCatalog  @relation(fields: [wineCatalogId], references: [id])
+  game     Game?        @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  gameWine Wine?        @relation(fields: [wineId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([wineCatalogId])
+  @@index([createdAt])
+  @@map("tasting_history")
 }
 
 enum Difficulty {

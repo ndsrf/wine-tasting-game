@@ -78,7 +78,29 @@ export async function POST(request: NextRequest) {
     })
 
     for (let i = 0; i < wineCharacteristics.length; i++) {
-      const { wine, characteristics } = wineCharacteristics[i]
+      const { wine, characteristics, canonicalInfo } = wineCharacteristics[i]
+
+      // Look up or create wine catalog entry
+      let wineCatalog = await prisma.wineCatalog.findUnique({
+        where: {
+          name_year: {
+            name: canonicalInfo.canonicalName,
+            year: canonicalInfo.year,
+          },
+        },
+      })
+
+      if (!wineCatalog) {
+        wineCatalog = await prisma.wineCatalog.create({
+          data: {
+            name: canonicalInfo.canonicalName,
+            year: canonicalInfo.year,
+            producer: canonicalInfo.producer,
+            region: canonicalInfo.region,
+          },
+        })
+      }
+
       await prisma.wine.create({
         data: {
           gameId: game.id,
@@ -86,6 +108,7 @@ export async function POST(request: NextRequest) {
           name: wine.name,
           year: wine.year,
           characteristics: characteristics as any,
+          wineCatalogId: wineCatalog.id,
         },
       })
     }

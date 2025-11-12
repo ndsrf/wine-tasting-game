@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Footer } from '@/components/Footer'
+import Header from '@/components/Header'
 import { Wine, Users, Trophy, Smartphone, Sparkles, Eye, Wind, TrendingUp, Star } from 'lucide-react'
 import '@/lib/i18n'
 
@@ -26,6 +27,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      <Header />
+
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-wine-900 to-red-900">
         {/* Animated background elements */}
@@ -36,38 +39,6 @@ export default function HomePage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 py-8">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-12 flex-wrap gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20">
-                <Wine className="h-8 w-8 text-gold-300" />
-              </div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">{t('homepage.title')}</h1>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Action Buttons */}
-              <div className="hidden md:flex items-center gap-3">
-                <a href="#join-game">
-                  <Button
-                    variant="outline"
-                    className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-200"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    {t('homepage.joinGame')}
-                  </Button>
-                </a>
-                <Link href="/auth/login">
-                  <Button className="bg-gold-500 hover:bg-gold-600 text-wine-900 font-semibold shadow-lg hover:shadow-gold-500/50 transition-all duration-200">
-                    <Wine className="h-4 w-4 mr-2" />
-                    {t('homepage.createGame')}
-                  </Button>
-                </Link>
-              </div>
-
-              <LanguageSwitcher />
-            </div>
-          </header>
 
           {/* Hero Content */}
           <div className="grid lg:grid-cols-2 gap-12 items-center py-12 md:py-20">
