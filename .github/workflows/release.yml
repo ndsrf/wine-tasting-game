@@ -114,10 +114,10 @@ jobs:
             Docker images for this release are available at:
             ```
             ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version }}
-            ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version | split('.') | slice(0, 2) | join('.') }}
-            ghcr.io/ndsrf/wine-tasting-game:${{ steps.version.outputs.version | split('.') | first }}
             ghcr.io/ndsrf/wine-tasting-game:latest
             ```
+
+            The Docker build workflow also creates additional semantic version tags (e.g., `1.1`, `1`) automatically.
 
             ### 🚀 Quick Start
 
