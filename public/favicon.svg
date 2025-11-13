@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Wine bottle body -->
+  <path d="M18 12h12v24a6 6 0 0 1-6 6 6 6 0 0 1-6-6V12z" fill="#4a1e1e"/>
+  
+  <!-- Wine bottle neck -->
+  <path d="M20 4h8v8h-8z" fill="#5a2e2e"/>
+  
+  <!-- Wine bottle cap -->
+  <rect x="19" y="2" width="10" height="3" rx="1" fill="#8b4513"/>
+  
+  <!-- Wine level inside bottle -->
+  <path d="M19 20h10v14a5 5 0 0 1-5 5 5 5 0 0 1-5-5V20z" fill="#722f37"/>
+  
+  <!-- Highlight on bottle -->
+  <ellipse cx="21" cy="18" rx="1.5" ry="4" fill="#ffffff" opacity="0.3"/>
+  
+  <!-- Label area -->
+  <rect x="20" y="24" width="8" height="6" rx="0.5" fill="#d4af37" opacity="0.4"/>
+</svg>
