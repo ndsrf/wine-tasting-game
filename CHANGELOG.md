@@ -1,11 +1,11 @@
 ## <small>1.4.3 (2025-11-13)</small>
 
-### Bug Fixes
+* docs: update CHANGELOG.md for v1.4.3 release ([e30cc35](https://github.com/ndsrf/wine-tasting-game/commit/e30cc35))
+* chore: bump version to 1.4.3 ([e38b917](https://github.com/ndsrf/wine-tasting-game/commit/e38b917))
+* fix(ui): update create game button label when user is authenticated ([92df0c1](https://github.com/ndsrf/wine-tasting-game/commit/92df0c1))
+* Initial plan ([f458cb6](https://github.com/ndsrf/wine-tasting-game/commit/f458cb6))
+* Merge pull request #11 from ndsrf/copilot/investigate-versioning-system ([9406810](https://github.com/ndsrf/wine-tasting-game/commit/9406810)), closes [#11](https://github.com/ndsrf/wine-tasting-game/issues/11)
 
-* **ui**: conditionally display create game button based on auth state ([92df0c1](https://github.com/ndsrf/wine-tasting-game/commit/92df0c1))
-  - Fix homepage "Create Game" card button showing "Login / Register" when user is already logged in
-  - Button now displays "Create Game" for authenticated users and links directly to director dashboard
-  - Button displays "Login / Register" for unauthenticated users and links to login page
 
 
 ## <small>1.4.2 (2025-11-13)</small>
