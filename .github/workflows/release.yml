@@ -53,12 +53,13 @@ jobs:
 
       - name: Update VERSION.md
         run: |
-          # Create updated VERSION.md
-          cat > VERSION.md << 'EOF'
+          # Create updated VERSION.md with proper date substitution
+          RELEASE_DATE=$(date +"%B %d, %Y")
+          cat > VERSION.md << EOF
           # Wine Tasting Game - Version History
 
           ## Version ${{ steps.version.outputs.version }}
-          **Released:** $(date +"%B %d, %Y")
+          **Released:** ${RELEASE_DATE}
           **Status:** Stable
 
           ### What's New
