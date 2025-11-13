@@ -1,6 +1,6 @@
 {
   "name": "wine-tasting-game",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Multiplayer wine tasting game application",
   "private": true,
   "scripts": {
