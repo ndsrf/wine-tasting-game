@@ -2,9 +2,12 @@
 
 This document describes the comprehensive versioning system implemented in the Wine Tasting Game application.
 
+> **TL;DR**: Use `npm run version:patch` in feature branches (doesn't push tag), then push the tag after PR is merged. Use `npm run version:patch:push` on main branch for immediate releases.
+
 ## Table of Contents
 
 - [Overview](#overview)
+- [Quick Start](#quick-start)
 - [Semantic Versioning](#semantic-versioning)
 - [Conventional Commits](#conventional-commits)
 - [Version Bumping](#version-bumping)
@@ -34,6 +37,65 @@ The Wine Tasting Game uses a comprehensive, automated versioning system that:
 - **Controlled Tag Pushing**: Tags created locally, pushed when ready
 - **No Auto-Push**: Uses `.npmrc` to prevent automatic tag pushing
 - **Dual Workflow**: Choose between PR-based or direct release workflows
+
+## Quick Start
+
+### For Pull Requests (Recommended)
+
+When working on a feature branch and want to include version bump in your PR:
+
+```bash
+# 1. Create your feature branch
+git checkout -b feature/my-awesome-feature
+
+# 2. Make changes with conventional commits
+git commit -m "feat(game): add new scoring algorithm"
+git commit -m "fix(ui): resolve button alignment issue"
+
+# 3. Bump version (creates tag locally, doesn't push it)
+npm run version:minor  # or patch/major
+
+# 4. Push your branch (tag stays local)
+git push origin feature/my-awesome-feature
+
+# 5. Create PR and get it merged
+
+# 6. After PR is merged, push the tag to trigger release
+git checkout main
+git pull
+git push origin v1.5.0  # Use the version number from step 3
+```
+
+### For Direct Releases (From Main Branch)
+
+When you want to release immediately without a PR:
+
+```bash
+# 1. Ensure you're on main and up to date
+git checkout main
+git pull
+
+# 2. Make your changes with conventional commits
+git commit -m "feat(api): add new endpoint"
+
+# 3. Bump version and release immediately
+npm run version:minor:push  # or patch:push/major:push
+
+# GitHub Actions will automatically:
+# - Create a GitHub Release
+# - Build Docker images
+# - Update CHANGELOG.md
+```
+
+### Which Workflow Should I Use?
+
+| Situation | Use |
+|-----------|-----|
+| Working in a team with PRs | **Feature Branch Workflow** |
+| Small hotfix that needs immediate release | **Direct Release Workflow** |
+| New feature that needs review | **Feature Branch Workflow** |
+| Documentation updates | **Feature Branch Workflow** |
+| Emergency security fix | **Direct Release Workflow** |
 
 ## Semantic Versioning
 
