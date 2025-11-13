@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
+    "preversion": "npm install --ignore-scripts",
     "version:patch": "npm version patch -m 'chore: bump version to %s' && npm run changelog",
     "version:minor": "npm version minor -m 'chore: bump version to %s' && npm run changelog",
     "version:major": "npm version major -m 'chore: bump version to %s' && npm run changelog",
