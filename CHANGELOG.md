@@ -1,3 +1,13 @@
+## <small>1.4.3 (2025-11-13)</small>
+
+### Bug Fixes
+
+* **ui**: conditionally display create game button based on auth state ([92df0c1](https://github.com/ndsrf/wine-tasting-game/commit/92df0c1))
+  - Fix homepage "Create Game" card button showing "Login / Register" when user is already logged in
+  - Button now displays "Create Game" for authenticated users and links directly to director dashboard
+  - Button displays "Login / Register" for unauthenticated users and links to login page
+
+
 ## <small>1.4.2 (2025-11-13)</small>
 
 * Initial plan ([af2346d](https://github.com/ndsrf/wine-tasting-game/commit/af2346d))
