@@ -58,7 +58,7 @@ export default function HomePage() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link href="/auth/login" className="flex-1 sm:flex-initial">
+                <Link href="/auth/login?redirect=/director" className="flex-1 sm:flex-initial">
                   <Button className="w-full bg-gold-500 hover:bg-gold-600 text-wine-900 font-semibold px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-gold-500/50 transition-all duration-300 transform hover:scale-105">
                     {t('homepage.createGame')}
                   </Button>
@@ -212,7 +212,7 @@ export default function HomePage() {
                 <p className="text-gray-600 mb-6">
                   {t('homepage.setupDescription')}
                 </p>
-                <Link href="/auth/login">
+                <Link href="/auth/login?redirect=/director">
                   <Button className="w-full py-4 text-lg bg-gold-500 hover:bg-gold-600">
                     {t('homepage.loginRegister')} →
                   </Button>

@@ -1,25 +1,44 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Wine } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { handleGoogleSuccess, isAuthenticated, isLoading: authLoading } = useAuth()
   const { t, ready: i18nReady } = useTranslation()
+
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  const redirectPath = searchParams.get('redirect') || '/director'
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (mounted && !authLoading && isAuthenticated) {
+      router.push(redirectPath)
+    }
+  }, [mounted, authLoading, isAuthenticated, router, redirectPath])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +71,7 @@ export default function RegisterPage() {
       if (response.ok) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
-        router.push('/director')
+        router.push(redirectPath)
       } else {
         setError(data.error || t('auth.registrationFailed'))
       }
@@ -63,7 +82,42 @@ export default function RegisterPage() {
     }
   }
 
-  if (!i18nReady) {
+  const onGoogleLoginSuccess = async (credentialResponse: CredentialResponse) => {
+    console.log('Google registration initiated', credentialResponse)
+    setLoading(true)
+    setError('')
+    try {
+      const result = await handleGoogleSuccess(credentialResponse)
+      console.log('Google registration result:', result)
+      if (result.success) {
+        console.log('Redirecting to:', redirectPath)
+        router.push(redirectPath)
+      } else {
+        console.error('Google registration failed:', result.error)
+        setError(result.error || t('auth.registrationFailed'))
+      }
+    } catch (err) {
+      console.error('Google registration exception:', err)
+      setError(t('errors.tryAgain'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Show loading state until mounted (prevents hydration mismatch)
+  if (!mounted || authLoading || !i18nReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render register form if already authenticated
+  if (isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
@@ -88,6 +142,11 @@ export default function RegisterPage() {
           </Link>
           <h2 className="text-2xl font-bold text-gray-900">{t('auth.createAccount')}</h2>
           <p className="text-gray-600 mt-2">{t('auth.registerDescription')}</p>
+          {redirectPath !== '/director' && (
+            <p className="text-sm text-wine-600 mt-1">
+              You&apos;ll be redirected to your requested page after registration
+            </p>
+          )}
         </div>
 
         <Card>
@@ -142,9 +201,32 @@ export default function RegisterPage() {
             </Button>
           </form>
 
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">{t('auth.continueWith')}</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <GoogleLogin
+                onSuccess={onGoogleLoginSuccess}
+                onError={() => {
+                  setError(t('auth.registrationFailed'))
+                }}
+              />
+            </div>
+          </div>
+
           <p className="text-center text-sm text-gray-600 mt-6">
             {t('auth.alreadyHaveAccount')}{' '}
-            <Link href="/auth/login" className="text-wine-600 hover:text-wine-700 font-medium">
+            <Link
+              href={`/auth/login${redirectPath !== '/director' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`}
+              className="text-wine-600 hover:text-wine-700 font-medium"
+            >
               {t('auth.signIn')}
             </Link>
           </p>
@@ -157,5 +239,22 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  const { t } = useTranslation()
+
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Wine className="h-12 w-12 text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('common.loading')}</h2>
+        </div>
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
   )
 }

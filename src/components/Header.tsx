@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -11,6 +11,7 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const { t } = useTranslation()
   const router = useRouter()
+  const pathname = usePathname()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleLogout = async () => {
@@ -94,13 +95,13 @@ export default function Header() {
               /* Login/Register Buttons */
               <div className="flex items-center space-x-2">
                 <Link
-                  href="/auth/login"
+                  href={`/auth/login${pathname && pathname !== '/auth/login' && pathname !== '/auth/register' ? `?redirect=${encodeURIComponent(pathname)}` : ''}`}
                   className="px-4 py-2 text-sm font-medium text-white hover:bg-purple-800 rounded-lg transition-colors"
                 >
                   {t('navigation.login')}
                 </Link>
                 <Link
-                  href="/auth/register"
+                  href={`/auth/register${pathname && pathname !== '/auth/login' && pathname !== '/auth/register' ? `?redirect=${encodeURIComponent(pathname)}` : ''}`}
                   className="px-4 py-2 text-sm font-medium bg-white text-purple-900 hover:bg-purple-50 rounded-lg transition-colors"
                 >
                   {t('navigation.register')}

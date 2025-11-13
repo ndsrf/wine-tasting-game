@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Wine } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { VersionModal } from './VersionModal'
@@ -9,6 +10,7 @@ import { APP_VERSION } from '@/lib/version'
 
 export function Footer() {
   const { t } = useTranslation()
+  const pathname = usePathname()
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false)
 
   return (
@@ -28,7 +30,7 @@ export function Footer() {
             <div>
               <h4 className="font-bold mb-4">{t('homepage.quickLinks')}</h4>
               <ul className="space-y-2 text-wine-200">
-                <li><Link href="/auth/login" className="hover:text-gold-300 transition-colors">{t('homepage.createGameLink')}</Link></li>
+                <li><Link href={`/auth/login${pathname && pathname !== '/auth/login' && pathname !== '/auth/register' ? `?redirect=${encodeURIComponent(pathname)}` : ''}`} className="hover:text-gold-300 transition-colors">{t('homepage.createGameLink')}</Link></li>
                 <li><a href="#join-game" className="hover:text-gold-300 transition-colors">{t('homepage.joinGameLink')}</a></li>
                 <li><Link href="/director" className="hover:text-gold-300 transition-colors">{t('homepage.directorDashboardLink')}</Link></li>
               </ul>

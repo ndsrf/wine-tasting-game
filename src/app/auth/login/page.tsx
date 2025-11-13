@@ -178,7 +178,10 @@ function LoginPageContent() {
 
           <p className="text-center text-sm text-gray-600 mt-6">
             {t('auth.dontHaveAccount')}{' '}
-            <Link href="/auth/register" className="text-wine-600 hover:text-wine-700 font-medium">
+            <Link
+              href={`/auth/register${redirectPath !== '/director' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`}
+              className="text-wine-600 hover:text-wine-700 font-medium"
+            >
               {t('auth.signUp')}
             </Link>
           </p>
