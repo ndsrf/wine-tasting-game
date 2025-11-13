@@ -94,9 +94,24 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+
+          # Fetch latest main branch
+          git fetch origin main
+
+          # Checkout main branch (exit detached HEAD state)
+          git checkout main
+
+          # Pull latest changes
+          git pull origin main
+
+          # Add and commit updated files
           git add CHANGELOG.md VERSION.md public/VERSION.md
-          git diff --staged --quiet || git commit -m "chore: update changelog and version files for ${{ steps.version.outputs.tag }}"
-          git push origin HEAD:main
+
+          # Only commit if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update changelog and version files for ${{ steps.version.outputs.tag }}"
+            git push origin main
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
