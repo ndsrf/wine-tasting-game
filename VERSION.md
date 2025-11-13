@@ -1,7 +1,7 @@
 # Wine Tasting Game - Version History
 
 ## Version 1.4.3
-**Released:** $(date +"%B %d, %Y")
+**Released:** November 13, 2025
 **Status:** Stable
 
 ### What's New
