@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { Wine, Plus, Trash2, AlertTriangle } from 'lucide-react'
+import { Wine, Plus, Trash2, AlertTriangle, Home } from 'lucide-react'
 import { Difficulty } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
 import { authenticatedFetch } from '@/lib/auth-client'
@@ -206,6 +207,16 @@ export default function DirectorPage() {
               </Button>
             </div>
           </Card>
+
+          <div className="text-center mt-6">
+            <Link
+              href="/"
+              className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
+            >
+              <Home className="h-4 w-4" />
+              {t('auth.backToHome')}
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -330,7 +341,15 @@ export default function DirectorPage() {
           </div>
         </Card>
 
-        <div className="text-center mt-6">
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <Link
+            href="/"
+            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+          >
+            <Home className="h-4 w-4" />
+            {t('auth.backToHome')}
+          </Link>
+          <span className="text-gray-300">•</span>
           <button
             onClick={handleSignOut}
             className="text-sm text-gray-500 hover:text-gray-700"
