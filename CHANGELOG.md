@@ -1,19 +1,50 @@
+## <small>1.4.2 (2025-11-13)</small>
+
+* Initial plan ([af2346d](https://github.com/ndsrf/wine-tasting-game/commit/af2346d))
+* chore: update changelog and version files for v1.4.2 ([b8136c4](https://github.com/ndsrf/wine-tasting-game/commit/b8136c4))
+
+
+
+## <small>1.4.2 (2025-11-13)</small>
+
+### Features
+
+* **ui**: add wine bottle favicon to application ([03285f7](https://github.com/ndsrf/wine-tasting-game/commit/03285f782f260e432849833f3462dcd4a1d1c749))
+
+
+
+## <small>1.4.1 (2025-11-13)</small>
+
+### Bug Fixes
+
+* **ci**: resolve detached HEAD push failure in release workflow ([0fa1ab9](https://github.com/ndsrf/wine-tasting-game/commit/0fa1ab9bc44400ac2bfdc158285109e7f8dc8ac7))
+
+
+### Features
+
+* **ui**: add home page link to director dashboard ([1ac2ad1](https://github.com/ndsrf/wine-tasting-game/commit/1ac2ad199ec2bcbe2a21c3ad53aa94aa995958ed))
+* **auth**: add Google OAuth to register page and enhance redirect handling ([cbfc29e](https://github.com/ndsrf/wine-tasting-game/commit/cbfc29ec60bc98e75bcf4186e5aa8d7adba9243a))
+
+
+
 ## 1.4.0 (2025-11-12)
 
-* chore: bump version to 1.3.0 ([9b6cb9d](https://github.com/ndsrf/wine-tasting-game/commit/9b6cb9d))
-* chore: bump version to 1.4.0 ([537088f](https://github.com/ndsrf/wine-tasting-game/commit/537088f))
-* feat(game): add wine tasting history with multilingual support ([8786d4f](https://github.com/ndsrf/wine-tasting-game/commit/8786d4f))
+### Features
+
+* **game**: add wine tasting history with multilingual support ([8786d4f](https://github.com/ndsrf/wine-tasting-game/commit/8786d4f))
 
 
 
 ## <small>1.2.1 (2025-11-12)</small>
 
-* chore: bump version to 1.1.0 ([7e86222](https://github.com/ndsrf/wine-tasting-game/commit/7e86222))
-* chore: bump version to 1.2.0 ([8c1c2f2](https://github.com/ndsrf/wine-tasting-game/commit/8c1c2f2))
-* chore: bump version to 1.2.1 ([21f42fd](https://github.com/ndsrf/wine-tasting-game/commit/21f42fd))
-* build(deps): update package-lock.json for new versioning dependencies ([001c6a9](https://github.com/ndsrf/wine-tasting-game/commit/001c6a9))
-* fix(ci): remove invalid pipe operators from release workflow ([af49d40](https://github.com/ndsrf/wine-tasting-game/commit/af49d40))
-* feat(ci): implement comprehensive versioning system with automated releases ([ae059b2](https://github.com/ndsrf/wine-tasting-game/commit/ae059b2))
+### Bug Fixes
+
+* **ci**: remove invalid pipe operators from release workflow ([af49d40](https://github.com/ndsrf/wine-tasting-game/commit/af49d40))
+
+
+### Features
+
+* **ci**: implement comprehensive versioning system with automated releases ([ae059b2](https://github.com/ndsrf/wine-tasting-game/commit/ae059b2))
 * Add Eruda mobile console to director page for on-device debugging ([0c9a9e3](https://github.com/ndsrf/wine-tasting-game/commit/0c9a9e3))
 * Add explicit build command to force clean Vercel build ([9079ac7](https://github.com/ndsrf/wine-tasting-game/commit/9079ac7))
 * Add hint generation feature and wine explanations ([f8e0c8e](https://github.com/ndsrf/wine-tasting-game/commit/f8e0c8e))

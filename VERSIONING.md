@@ -25,6 +25,15 @@ The Wine Tasting Game uses a comprehensive, automated versioning system that:
 ✅ **GitHub Releases**: Automatically created with release notes
 ✅ **Docker Images**: Tagged with version numbers
 ✅ **Runtime Access**: Version available via environment variables and API
+✅ **PR-Friendly**: Version bumps can be included in pull requests
+✅ **Flexible Workflows**: Supports both feature branch and direct release workflows
+
+### Key Features
+
+- **Feature Branch Support**: Bump versions in feature branches without triggering releases
+- **Controlled Tag Pushing**: Tags created locally, pushed when ready
+- **No Auto-Push**: Uses `.npmrc` to prevent automatic tag pushing
+- **Dual Workflow**: Choose between PR-based or direct release workflows
 
 ## Semantic Versioning
 
@@ -136,31 +145,102 @@ Invalid commits will be rejected with an error message.
 
 ## Version Bumping
 
-### Manual Version Bump
+### Two Workflows: Feature Branch vs Main Branch
 
-Use npm scripts to bump versions:
+This project supports two different versioning workflows:
+
+#### 1. Feature Branch Workflow (for Pull Requests)
+
+**Use when**: Working on a feature branch and want to include version bump in your PR.
 
 ```bash
-# Patch version (1.0.0 → 1.0.1) - Bug fixes
-npm run version:patch
+# Bump version (creates tag but doesn't push)
+npm run version:patch  # or minor/major
 
-# Minor version (1.0.0 → 1.1.0) - New features
-npm run version:minor
+# The CHANGELOG.md will be updated automatically
+# Commit the changes to your branch
+git add CHANGELOG.md
+git commit --amend --no-edit
 
-# Major version (1.0.0 → 2.0.0) - Breaking changes
-npm run version:major
+# Push your branch (but not the tag yet)
+git push origin your-branch-name
+```
 
-# Show current version
+**What happens**:
+1. Version in `package.json` is bumped
+2. Git tag is created locally (e.g., `v1.0.1`)
+3. CHANGELOG.md is updated
+4. Git commit is created with message: `chore: bump version to vX.X.X`
+5. **Tag is NOT pushed** (stays local until you push it)
+
+**When to push the tag**:
+- Push the tag **only after your PR is merged to main**:
+  ```bash
+  # After PR is merged, fetch and checkout main
+  git checkout main
+  git pull
+  
+  # Push the tag to trigger release
+  git push origin v1.0.1  # or use: git push --tags
+  ```
+
+#### 2. Main Branch Workflow (Direct Release)
+
+**Use when**: Working directly on main branch and ready to release immediately.
+
+```bash
+# Bump version AND push tag in one command
+npm run version:patch:push  # or minor:push/major:push
+```
+
+**What happens**:
+1. Version in `package.json` is bumped
+2. Git tag is created
+3. CHANGELOG.md is updated
+4. Changes are committed
+5. **Tag is automatically pushed** to GitHub
+6. **Release workflow is triggered** immediately
+
+### Manual Version Bump Commands
+
+```bash
+# For feature branches (doesn't push):
+npm run version:patch   # 1.0.0 → 1.0.1 (Bug fixes)
+npm run version:minor   # 1.0.0 → 1.1.0 (New features)
+npm run version:major   # 1.0.0 → 2.0.0 (Breaking changes)
+
+# For main branch (pushes tag automatically):
+npm run version:patch:push
+npm run version:minor:push
+npm run version:major:push
+
+# Show current version:
 npm run version:current
 ```
 
-### What Happens When You Bump Version
+### What Happens During Version Bump
 
 1. **Updates `package.json`** with new version
-2. **Creates git commit** with message: `chore: bump version to vX.X.X`
-3. **Creates git tag** (e.g., `v1.0.1`)
-4. **Pushes commit and tag** to GitHub
-5. **Triggers GitHub Actions** for automated release
+2. **Updates CHANGELOG.md** with recent commits
+3. **Creates git commit** with message: `chore: bump version to vX.X.X`
+4. **Creates git tag** (e.g., `v1.0.1`)
+5. **Optionally pushes tag** (only if using `:push` variant)
+
+When tag is pushed to GitHub:
+- GitHub Actions release workflow is triggered
+- GitHub Release is created
+- Docker images are built and published
+- Documentation is updated
+
+### NPM Configuration (.npmrc)
+
+The project uses `.npmrc` to control versioning behavior:
+
+- **git-tag-version=true**: Creates git tags when bumping version
+- **No auto-push**: Tags are created locally but not pushed automatically (unless using `:push` variant)
+- **tag-version-prefix=v**: Tags are prefixed with 'v' (e.g., v1.0.1)
+
+This configuration allows version bumps in feature branches without triggering releases prematurely.
 
 ### Automatic Version Detection
 
@@ -172,28 +252,67 @@ The version bump scripts use conventional commits to suggest the appropriate ver
 
 ## Release Process
 
-### Step-by-Step Release
+### Option A: Release from Feature Branch (Recommended for PRs)
 
-1. **Make changes** with conventional commits:
+1. **Create feature branch**:
+   ```bash
+   git checkout -b feature/my-feature
+   ```
+
+2. **Make changes** with conventional commits:
    ```bash
    git commit -m "feat(game): add new feature"
    git commit -m "fix(ui): resolve styling issue"
    ```
 
-2. **Check what will be released**:
-   ```bash
-   git log $(git describe --tags --abbrev=0)..HEAD --oneline
-   ```
-
-3. **Bump version** (choose appropriate level):
+3. **Bump version before merging**:
    ```bash
    npm run version:patch  # or minor/major
+   ```
+
+4. **Amend the CHANGELOG if needed**:
+   ```bash
+   git add CHANGELOG.md
+   git commit --amend --no-edit
+   ```
+
+5. **Push branch** (tag stays local):
+   ```bash
+   git push origin feature/my-feature
+   ```
+
+6. **Create and merge PR**
+
+7. **After merge, push tag** to trigger release:
+   ```bash
+   git checkout main
+   git pull
+   git push origin v1.x.x  # Replace with your version
+   ```
+
+### Option B: Direct Release from Main Branch
+
+1. **Ensure you're on main**:
+   ```bash
+   git checkout main
+   git pull
+   ```
+
+2. **Make changes** with conventional commits:
+   ```bash
+   git commit -m "feat(game): add new feature"
+   git commit -m "fix(ui): resolve styling issue"
+   ```
+
+3. **Bump version and release**:
+   ```bash
+   npm run version:patch:push  # or minor:push/major:push
    ```
 
 4. **Automation takes over**:
    - Tag pushed to GitHub
    - GitHub Actions triggered
-   - Changelog generated
+   - Changelog generated (if needed)
    - GitHub Release created
    - Docker images built and published
    - Documentation updated
@@ -355,16 +474,85 @@ git commit -m "Added feature"
 git commit -m "feat(game): add wine pairing suggestions"
 ```
 
+### Version Bump in Feature Branch Issues
+
+**Issue**: "I bumped version in my feature branch and it triggered a release prematurely"
+
+**Solution**: When working in feature branches, use the regular version commands (without `:push`):
+```bash
+# In feature branch - creates tag locally but doesn't push
+npm run version:patch
+
+# Push your branch (not the tag)
+git push origin your-branch-name
+
+# After PR is merged, push the tag from main
+git checkout main
+git pull
+git push origin v1.x.x
+```
+
+**Prevention**: Use `.npmrc` configuration (already set up) which prevents auto-push.
+
+### Tag Already Exists
+
+**Issue**: `tag 'v1.x.x' already exists`
+
+**Solution**: If you need to change the version:
+```bash
+# Delete local tag
+git tag -d v1.x.x
+
+# Delete remote tag (if already pushed)
+git push --delete origin v1.x.x
+
+# Bump to correct version
+npm run version:patch
+```
+
 ### Version Bump Failed
 
 **Error**: `Failed to push tags to remote`
 
-**Solution**: Ensure you have push permissions and are on the correct branch:
+**Solution**: This error no longer occurs with the updated configuration. Tags are not automatically pushed unless you use the `:push` variant:
 ```bash
-git fetch origin
-git pull origin main
+# This creates tag but doesn't push (safe for feature branches)
 npm run version:patch
+
+# This pushes tag immediately (use on main branch only)
+npm run version:patch:push
 ```
+
+### Merge Conflicts in CHANGELOG.md
+
+**Issue**: CHANGELOG.md has merge conflicts when merging feature branch
+
+**Solution**: 
+```bash
+# Accept both changes and manually organize
+# Then regenerate the full changelog
+npm run changelog:all
+
+# Review and commit
+git add CHANGELOG.md
+git commit -m "chore: resolve changelog merge conflicts"
+```
+
+### Release Not Triggered After Pushing Tag
+
+**Issue**: Pushed tag but GitHub Actions didn't create release
+
+**Solution**: 
+1. Check that tag follows the pattern `v*` (e.g., `v1.0.1`, not `1.0.1`)
+2. Verify GitHub Actions has necessary permissions
+3. Check Actions tab on GitHub for any errors
+4. Manually trigger release if needed:
+   ```bash
+   # Delete and recreate tag
+   git tag -d v1.x.x
+   git push --delete origin v1.x.x
+   npm run version:patch:push
+   ```
 
 ### Docker Image Not Found
 
@@ -404,6 +592,25 @@ npm run prepare
 chmod +x .husky/commit-msg
 ```
 
+### CHANGELOG Missing Recent Versions
+
+**Issue**: CHANGELOG.md doesn't include recent version releases
+
+**Solution**: The changelog is generated from conventional commits. Regenerate it:
+```bash
+# Regenerate entire changelog from all tags
+npm run changelog:all
+
+# Or regenerate just the latest changes
+npm run changelog
+```
+
+**Note**: Make sure you have fetched all tags:
+```bash
+git fetch --all --tags
+npm run changelog:all
+```
+
 ## Best Practices
 
 1. **Write descriptive commit messages** that explain the "why" not just the "what"
@@ -416,6 +623,8 @@ chmod +x .husky/commit-msg
 8. **Use scopes consistently** for better changelog organization
 9. **Follow semantic versioning strictly** for predictable releases
 10. **Communicate breaking changes** to users in advance
+11. **Use feature branch workflow for PRs** - bump version in branch, push tag after merge
+12. **Never use `:push` variants in feature branches** - only use on main branch for immediate releases
 
 ## Additional Resources
 
