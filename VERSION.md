@@ -1,6 +1,6 @@
 # Wine Tasting Game - Version History
 
-## Version 1.4.1
+## Version 1.4.2
 **Released:** $(date +"%B %d, %Y")
 **Status:** Stable
 
