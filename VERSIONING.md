@@ -282,11 +282,12 @@ npm run version:current
 
 ### What Happens During Version Bump
 
-1. **Updates `package.json`** with new version
-2. **Updates CHANGELOG.md** with recent commits
-3. **Creates git commit** with message: `chore: bump version to vX.X.X`
-4. **Creates git tag** (e.g., `v1.0.1`)
-5. **Optionally pushes tag** (only if using `:push` variant)
+1. **Ensures dependencies are installed** (automatically via `preversion` hook)
+2. **Updates `package.json`** with new version
+3. **Updates CHANGELOG.md** with recent commits using `conventional-changelog`
+4. **Creates git commit** with message: `chore: bump version to vX.X.X`
+5. **Creates git tag** (e.g., `v1.0.1`)
+6. **Optionally pushes tag** (only if using `:push` variant)
 
 When tag is pushed to GitHub:
 - GitHub Actions release workflow is triggered
@@ -303,6 +304,17 @@ The project uses `.npmrc` to control versioning behavior:
 - **tag-version-prefix=v**: Tags are prefixed with 'v' (e.g., v1.0.1)
 
 This configuration allows version bumps in feature branches without triggering releases prematurely.
+
+### Automatic Dependency Installation
+
+The `preversion` npm lifecycle hook automatically runs `npm install --ignore-scripts` before any version bump. This ensures:
+
+- ✅ `conventional-changelog-cli` and other dev dependencies are always installed
+- ✅ Changelog generation works reliably every time
+- ✅ No manual intervention needed to install dependencies
+- ✅ The `--ignore-scripts` flag prevents running postinstall scripts during the version bump process
+
+**Note**: This automatic installation step adds a few seconds to the version bump process, but ensures consistency across all environments.
 
 ### Automatic Version Detection
 

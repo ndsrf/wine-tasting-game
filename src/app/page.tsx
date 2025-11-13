@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/Input'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Footer } from '@/components/Footer'
 import Header from '@/components/Header'
+import { useAuth } from '@/hooks/useAuth'
 import { Wine, Users, Trophy, Smartphone, Sparkles, Eye, Wind, TrendingUp, Star } from 'lucide-react'
 import '@/lib/i18n'
 
 export default function HomePage() {
   const [gameCode, setGameCode] = useState('')
   const { t, ready } = useTranslation()
+  const { isAuthenticated } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -212,9 +214,9 @@ export default function HomePage() {
                 <p className="text-gray-600 mb-6">
                   {t('homepage.setupDescription')}
                 </p>
-                <Link href="/auth/login?redirect=/director">
+                <Link href={isAuthenticated ? "/director" : "/auth/login?redirect=/director"}>
                   <Button className="w-full py-4 text-lg bg-gold-500 hover:bg-gold-600">
-                    {t('homepage.loginRegister')} →
+                    {isAuthenticated ? t('homepage.createGame') : t('homepage.loginRegister')} →
                   </Button>
                 </Link>
               </Card>
