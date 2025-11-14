@@ -60,12 +60,12 @@ export async function GET(
     }
 
     console.log(`[Results API] Game ${code} is finished, returning results`)
-    console.log(`[Results API] Found ${game.players.length} players:`, game.players.map(p => ({ id: p.id, nickname: p.nickname, answerCount: p.answers.length })))
+    console.log(`[Results API] Found ${game.players.length} players:`, game.players.map((p: any) => ({ id: p.id, nickname: p.nickname, answerCount: p.answers.length })))
 
     // Generate explanations using OpenAI
     let explanations: Record<string, { visual: string; smell: string; taste: string }> = {}
     try {
-      const winesForExplanation = game.wines.map(wine => ({
+      const winesForExplanation = game.wines.map((wine: any) => ({
         name: wine.name,
         year: wine.year,
         characteristics: wine.characteristics as any
@@ -76,12 +76,12 @@ export async function GET(
     }
 
     const results = {
-      players: game.players.map(player => ({
+      players: game.players.map((player: any) => ({
         id: player.id,
         nickname: player.nickname,
         score: player.score,
-        totalHintsUsed: player.answers.reduce((sum, answer) => sum + (answer.hintsUsed || 0), 0),
-        answers: player.answers.map(answer => ({
+        totalHintsUsed: player.answers.reduce((sum: number, answer: any) => sum + (answer.hintsUsed || 0), 0),
+        answers: player.answers.map((answer: any) => ({
           wineId: answer.wineId,
           characteristicType: answer.characteristicType,
           answer: answer.answer,
@@ -89,14 +89,14 @@ export async function GET(
           hintsUsed: answer.hintsUsed || 0,
         })),
       })),
-      wines: game.wines.map(wine => ({
+      wines: game.wines.map((wine: any) => ({
         id: wine.id,
         number: wine.number,
         name: wine.name,
         year: wine.year,
         characteristics: wine.characteristics,
       })),
-      correctAnswers: game.wines.reduce((acc, wine) => {
+      correctAnswers: game.wines.reduce((acc: Record<string, any>, wine: any) => {
         acc[wine.id] = wine.characteristics as any
         return acc
       }, {} as Record<string, any>),

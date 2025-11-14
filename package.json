@@ -30,6 +30,8 @@
     "prepare": "husky || true"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "3.9.0",
     "@prisma/client": "5.17.0",
     "@react-oauth/google": "^0.12.2",
