@@ -1,16 +1,26 @@
-## <small>1.5.1 (2025-11-14)</small>
+## <small>1.5.3 (2025-11-14)</small>
 
+* chore: add Gemini API model testing script ([6a67ca0](https://github.com/ndsrf/wine-tasting-game/commit/6a67ca0))
 * chore: bump version to 1.4.1 ([bbc91bc](https://github.com/ndsrf/wine-tasting-game/commit/bbc91bc))
 * chore: bump version to 1.4.2 ([d07e115](https://github.com/ndsrf/wine-tasting-game/commit/d07e115))
 * chore: bump version to 1.4.3 ([e38b917](https://github.com/ndsrf/wine-tasting-game/commit/e38b917))
 * chore: bump version to 1.4.4 ([31cd6a7](https://github.com/ndsrf/wine-tasting-game/commit/31cd6a7))
 * chore: bump version to 1.5.0 ([d0a85b0](https://github.com/ndsrf/wine-tasting-game/commit/d0a85b0))
-* chore: bump version to 1.5.1 ([7820cab](https://github.com/ndsrf/wine-tasting-game/commit/7820cab))
+* chore: bump version to 1.5.1 ([5bc9d69](https://github.com/ndsrf/wine-tasting-game/commit/5bc9d69))
+* chore: bump version to 1.5.2 ([e0f6014](https://github.com/ndsrf/wine-tasting-game/commit/e0f6014))
+* chore: bump version to 1.5.3 ([4c237d0](https://github.com/ndsrf/wine-tasting-game/commit/4c237d0))
 * chore: update changelog and version files for v1.4.0 ([0bfb71d](https://github.com/ndsrf/wine-tasting-game/commit/0bfb71d))
 * chore: update changelog and version files for v1.4.1 ([c6915c4](https://github.com/ndsrf/wine-tasting-game/commit/c6915c4))
 * chore: update changelog and version files for v1.4.2 ([b8136c4](https://github.com/ndsrf/wine-tasting-game/commit/b8136c4))
 * chore: update changelog and version files for v1.4.3 ([fecce2d](https://github.com/ndsrf/wine-tasting-game/commit/fecce2d))
 * chore: update changelog and version files for v1.5.0 ([37a4002](https://github.com/ndsrf/wine-tasting-game/commit/37a4002))
+* chore: update changelog and version files for v1.5.1 ([e3948d1](https://github.com/ndsrf/wine-tasting-game/commit/e3948d1))
+* refactor(version): simplify version workflow by delegating changelog to CI ([cb6d659](https://github.com/ndsrf/wine-tasting-game/commit/cb6d659))
+* fix: regenerate CHANGELOG.md with conventional-changelog tool ([7549828](https://github.com/ndsrf/wine-tasting-game/commit/7549828))
+* fix(ci): fix versioning system to ensure changelog and VERSION.md are properly updated ([75eb93d](https://github.com/ndsrf/wine-tasting-game/commit/75eb93d))
+* fix(ci): resolve detached HEAD push failure in release workflow ([0fa1ab9](https://github.com/ndsrf/wine-tasting-game/commit/0fa1ab9))
+* fix(llm): migrate Gemini provider to new SDK and update to 2.5 models ([56bc583](https://github.com/ndsrf/wine-tasting-game/commit/56bc583))
+* fix(ui): update create game button label when user is authenticated ([92df0c1](https://github.com/ndsrf/wine-tasting-game/commit/92df0c1))
 * docs: update CHANGELOG.md for v1.4.3 release ([e30cc35](https://github.com/ndsrf/wine-tasting-game/commit/e30cc35))
 * docs: update version history to v1.4.0 ([b845d5e](https://github.com/ndsrf/wine-tasting-game/commit/b845d5e))
 * docs(config): add complete LLM provider configuration to deployment docs ([300537e](https://github.com/ndsrf/wine-tasting-game/commit/300537e))
@@ -19,16 +29,30 @@
 * Initial plan ([f458cb6](https://github.com/ndsrf/wine-tasting-game/commit/f458cb6))
 * Initial plan ([af2346d](https://github.com/ndsrf/wine-tasting-game/commit/af2346d))
 * Initial plan ([2eb4e4c](https://github.com/ndsrf/wine-tasting-game/commit/2eb4e4c))
-* fix: regenerate CHANGELOG.md with conventional-changelog tool ([7549828](https://github.com/ndsrf/wine-tasting-game/commit/7549828))
-* fix(ci): fix versioning system to ensure changelog and VERSION.md are properly updated ([75eb93d](https://github.com/ndsrf/wine-tasting-game/commit/75eb93d))
-* fix(ci): resolve detached HEAD push failure in release workflow ([0fa1ab9](https://github.com/ndsrf/wine-tasting-game/commit/0fa1ab9))
-* fix(ui): update create game button label when user is authenticated ([92df0c1](https://github.com/ndsrf/wine-tasting-game/commit/92df0c1))
 * feat(auth): add Google OAuth to register page and enhance redirect handling ([cbfc29e](https://github.com/ndsrf/wine-tasting-game/commit/cbfc29e))
 * feat(build): add preversion hook to ensure dependencies are installed ([2b30bc3](https://github.com/ndsrf/wine-tasting-game/commit/2b30bc3))
 * feat(ci): improve versioning system to support pull request workflows ([3d033c4](https://github.com/ndsrf/wine-tasting-game/commit/3d033c4))
 * feat(ui): add home page link to director dashboard ([1ac2ad1](https://github.com/ndsrf/wine-tasting-game/commit/1ac2ad1))
 * feat(ui): add wine bottle favicon to application ([03285f7](https://github.com/ndsrf/wine-tasting-game/commit/03285f7))
 
+
+### BREAKING CHANGE
+
+* CHANGELOG.md is now generated exclusively by GitHub
+Actions when a version tag is pushed, rather than locally during
+version bump. This prevents tag/commit mismatches and merge conflicts.
+
+Changes:
+- Remove postversion hook that generated changelog locally
+- Update VERSIONING.md to document new CI-based changelog workflow
+- Version bump creates single clean commit with package.json change
+- GitHub Actions generates CHANGELOG.md and commits it back
+
+Benefits:
+- No more force-updated tags or amended commits
+- Prevents merge conflicts in CHANGELOG.md
+- Single source of truth for changelog generation
+- Simpler local workflow (just version bump, no changelog handling)
 
 
 ## 1.4.0 (2025-11-12)
