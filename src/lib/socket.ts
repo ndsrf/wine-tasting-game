@@ -60,7 +60,7 @@ export class GameSocket {
 
           if (data.userId && data.userId === game.directorId) {
             // Director reconnection
-            let directorPlayer = game.players.find(p => p.id === `director-${data.userId}`)
+            let directorPlayer = game.players.find((p: any) => p.id === `director-${data.userId}`)
             if (!directorPlayer) {
               directorPlayer = await prisma.player.create({
                 data: {
@@ -85,7 +85,7 @@ export class GameSocket {
 
             // Check if this is a reconnection with playerId
             if (data.playerId && data.isReconnect) {
-              player = game.players.find(p => p.id === data.playerId)
+              player = game.players.find((p: any) => p.id === data.playerId)
               if (player) {
                 // Update session ID for reconnected player
                 await prisma.player.update({
@@ -98,7 +98,7 @@ export class GameSocket {
 
             // If not found by playerId, try to find by nickname (could be refresh or duplicate tab)
             if (!player) {
-              player = game.players.find(p => p.nickname === data.nickname)
+              player = game.players.find((p: any) => p.nickname === data.nickname)
             }
 
             // If player exists with same nickname
@@ -453,7 +453,7 @@ export class GameSocket {
             ...game.director,
             googleId: game.director.googleId || undefined
           } : undefined,
-          wines: game.wines?.map(wine => ({
+          wines: game.wines?.map((wine: any) => ({
             ...wine,
             characteristics: wine.characteristics as any
           }))

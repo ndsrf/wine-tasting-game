@@ -10,7 +10,7 @@ Wine Tasting Game - A multiplayer web application for conducting wine tasting se
 - Tailwind CSS for styling
 - Prisma with PostgreSQL
 - Socket.io for real-time communication
-- OpenAI API for wine characteristics
+- LLM Integration for wine characteristics (supports OpenAI, Gemini, Anthropic)
 - Redis for caching
 
 ## Development Commands
@@ -192,7 +192,8 @@ git commit -m "perf(db): add index on game code column"
 
 ### Core Logic
 - `src/lib/socket.ts` - Socket.io server logic
-- `src/lib/openai.ts` - OpenAI integration
+- `src/lib/llm/` - LLM provider abstraction layer (OpenAI, Gemini, Anthropic)
+- `src/lib/openai.ts` - Legacy LLM integration (now delegates to providers)
 - `src/lib/auth.ts` - Authentication utilities
 - `src/hooks/useSocket.ts` - Socket client hook
 
@@ -207,11 +208,35 @@ git commit -m "perf(db): add index on game code column"
 - `src/app/game/[code]/*` - Player interface
 
 ## Environment Variables Required
+
+### Core Requirements
 - DATABASE_URL (PostgreSQL)
 - REDIS_URL (Redis server)
-- OPENAI_API_KEY (OpenAI API)
 - JWT_SECRET (JWT signing)
 - NEXTAUTH_SECRET (NextAuth)
+
+### LLM Provider Configuration
+The application supports multiple LLM providers for wine characteristic generation:
+
+#### Provider Selection
+- **LLM_PROVIDER** - Choose provider: "openai" (default), "gemini", or "anthropic"
+
+#### OpenAI (default)
+- **OPENAI_API_KEY** - API key from https://platform.openai.com/api-keys
+- **OPENAI_MODEL** - Model to use (default: "gpt-4")
+  - Options: gpt-4, gpt-4-turbo-preview, gpt-3.5-turbo
+
+#### Google Gemini
+- **GEMINI_API_KEY** - API key from https://makersuite.google.com/app/apikey
+- **GEMINI_MODEL** - Model to use (default: "gemini-1.5-pro")
+  - Options: gemini-1.5-pro, gemini-1.5-flash, gemini-pro
+
+#### Anthropic Claude
+- **ANTHROPIC_API_KEY** - API key from https://console.anthropic.com/settings/keys
+- **ANTHROPIC_MODEL** - Model to use (default: "claude-3-5-sonnet-20241022")
+  - Options: claude-3-5-sonnet-20241022, claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+
+### Optional
 - GOOGLE_CLIENT_ID/SECRET (Google OAuth - optional)
 
 ## Deployment Notes
@@ -220,12 +245,38 @@ git commit -m "perf(db): add index on game code column"
 - Multi-language support (en, es, fr, de)
 
 ## Common Tasks
-- Adding new wine characteristics: Update `src/lib/openai.ts`
-- Adding new languages: Update `src/lib/i18n.ts`
-- Modifying game rules: Update Socket.io events in `src/lib/socket.ts`
-- Styling changes: Use Tailwind classes, custom CSS in `src/app/globals.css`
+- **Switching LLM providers**: Set `LLM_PROVIDER` environment variable to "openai", "gemini", or "anthropic"
+- **Adding new LLM providers**: Create a new provider class in `src/lib/llm/providers/` implementing the `LLMProvider` interface
+- **Adding new wine characteristics**: Update wine-options.ts and LLM provider prompts in `src/lib/llm/providers/`
+- **Adding new languages**: Update `src/lib/i18n.ts`
+- **Modifying game rules**: Update Socket.io events in `src/lib/socket.ts`
+- **Styling changes**: Use Tailwind classes, custom CSS in `src/app/globals.css`
 
 ## Known Limitations
 - Google OAuth integration is placeholder (needs proper setup)
 - PWA icons need to be generated
-- Some game interface elements are placeholder pending full OpenAI integration
+
+## LLM Provider Architecture
+
+### Overview
+The application uses an abstraction layer to support multiple LLM providers (OpenAI, Gemini, Anthropic). This allows easy switching between providers without changing application code.
+
+### Structure
+```
+src/lib/llm/
+├── index.ts              # Factory function to get configured provider
+├── types.ts              # LLMProvider interface and types
+└── providers/
+    ├── openai.ts         # OpenAI implementation
+    ├── gemini.ts         # Google Gemini implementation
+    └── anthropic.ts      # Anthropic Claude implementation
+```
+
+### Usage
+The LLM provider is automatically selected based on the `LLM_PROVIDER` environment variable. All wine characteristic generation, explanations, and hints are handled through this abstraction layer.
+
+### Adding a New Provider
+1. Create a new file in `src/lib/llm/providers/`
+2. Implement the `LLMProvider` interface from `types.ts`
+3. Add the provider to the factory function in `index.ts`
+4. Update environment variables documentation

@@ -43,7 +43,7 @@ export async function GET(
 
     // Calculate statistics
     const totalTastings = tastings.length
-    const totalRating = tastings.reduce((sum, t) => sum + t.rating, 0)
+    const totalRating = tastings.reduce((sum: number, t: any) => sum + t.rating, 0)
     const averageRating = totalRating / totalTastings
 
     // Rating distribution (1-10)
@@ -51,7 +51,7 @@ export async function GET(
     for (let i = 1; i <= 10; i++) {
       ratingDistribution[i] = 0
     }
-    tastings.forEach((t) => {
+    tastings.forEach((t: any) => {
       ratingDistribution[t.rating]++
     })
 
