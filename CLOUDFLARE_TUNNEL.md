@@ -130,7 +130,7 @@ OPENAI_MODEL="gpt-4"
 
 # Google Gemini Configuration (only needed if LLM_PROVIDER="gemini")
 GEMINI_API_KEY="your-gemini-api-key-here"
-GEMINI_MODEL="gemini-1.5-pro"
+GEMINI_MODEL="gemini-2.5-pro"
 
 # Anthropic Configuration (only needed if LLM_PROVIDER="anthropic")
 ANTHROPIC_API_KEY="sk-ant-your-anthropic-api-key-here"

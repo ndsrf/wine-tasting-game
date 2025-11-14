@@ -227,9 +227,13 @@ The application supports multiple LLM providers for wine characteristic generati
   - Options: gpt-4, gpt-4-turbo-preview, gpt-3.5-turbo
 
 #### Google Gemini
-- **GEMINI_API_KEY** - API key from https://makersuite.google.com/app/apikey
-- **GEMINI_MODEL** - Model to use (default: "gemini-1.5-pro")
-  - Options: gemini-1.5-pro, gemini-1.5-flash, gemini-pro
+- **GEMINI_API_KEY** - API key from https://aistudio.google.com/apikey
+- **GEMINI_MODEL** - Model to use (default: "gemini-2.5-pro")
+  - Recommended: gemini-2.5-pro (latest, adaptive thinking)
+  - Fast alternative: gemini-2.5-flash
+  - Legacy (still supported): gemini-1.5-pro, gemini-1.5-flash
+  - Note: Gemini 1.0 models were retired on April 29, 2025
+  - Any valid Gemini model name can be used - no restrictions in code
 
 #### Anthropic Claude
 - **ANTHROPIC_API_KEY** - API key from https://console.anthropic.com/settings/keys

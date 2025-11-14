@@ -179,9 +179,9 @@ OPENAI_API_KEY="sk-your-openai-api-key-here"
 OPENAI_MODEL="gpt-4"
 
 # Google Gemini Configuration (only needed if LLM_PROVIDER="gemini")
-# Get API key from: https://makersuite.google.com/app/apikey
+# Get API key from: https://aistudio.google.com/apikey
 GEMINI_API_KEY="your-gemini-api-key-here"
-GEMINI_MODEL="gemini-1.5-pro"
+GEMINI_MODEL="gemini-2.5-pro"
 
 # Anthropic Configuration (only needed if LLM_PROVIDER="anthropic")
 # Get API key from: https://console.anthropic.com/settings/keys

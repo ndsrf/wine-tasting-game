@@ -1,6 +1,6 @@
 {
   "name": "wine-tasting-game",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Multiplayer wine tasting game application",
   "private": true,
   "scripts": {
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.29.1",
     "@hookform/resolvers": "3.9.0",
     "@prisma/client": "5.17.0",
     "@react-oauth/google": "^0.12.2",
