@@ -37,7 +37,7 @@ services:
 
       # Google Gemini
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-pro}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-pro}
 
       # Anthropic Claude
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

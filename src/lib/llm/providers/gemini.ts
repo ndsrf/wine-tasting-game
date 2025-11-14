@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { Difficulty, WineCharacteristics } from '@/types';
 import { VISUAL_OPTIONS, SMELL_OPTIONS, TASTE_OPTIONS } from '@/lib/wine-options';
 import {
@@ -16,7 +16,7 @@ const CHARACTERISTIC_COUNTS = {
 };
 
 export class GeminiProvider implements LLMProvider {
-  private client: GoogleGenerativeAI;
+  private client: GoogleGenAI;
   private model: string;
 
   constructor() {
@@ -24,8 +24,8 @@ export class GeminiProvider implements LLMProvider {
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY environment variable is not set');
     }
-    this.client = new GoogleGenerativeAI(apiKey);
-    this.model = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
+    this.client = new GoogleGenAI({ apiKey });
+    this.model = process.env.GEMINI_MODEL || 'gemini-2.5-pro';
   }
 
   async generateWineCharacteristics(
@@ -83,10 +83,11 @@ Return the response in this exact JSON format:
   ]
 }`;
 
-      const model = this.client.getGenerativeModel({ model: this.model });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const content = response.text();
+      const result = await this.client.models.generateContent({
+        model: this.model,
+        contents: prompt,
+      });
+      const content = result.text;
 
       if (!content) {
         throw new Error('No response from Gemini');
@@ -207,10 +208,11 @@ Return the response in this exact JSON format:
 
 Keep each explanation concise (4-5 sentences) but informative.`;
 
-      const model = this.client.getGenerativeModel({ model: this.model });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const content = response.text();
+      const result = await this.client.models.generateContent({
+        model: this.model,
+        contents: prompt,
+      });
+      const content = result.text;
 
       if (!content) {
         throw new Error('No response from Gemini');
@@ -262,10 +264,11 @@ Example good hint: "This wine from 2015 typically shows characteristics associat
 Example bad hint: "Look for Ruby red, Oak, and Medium-bodied." (too specific)
 Example bad hint: "Château Margaux typically shows..." (mentions wine name)`;
 
-      const model = this.client.getGenerativeModel({ model: this.model });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const hint = response.text();
+      const result = await this.client.models.generateContent({
+        model: this.model,
+        contents: prompt,
+      });
+      const hint = result.text;
 
       if (!hint) {
         throw new Error('No hint generated');
