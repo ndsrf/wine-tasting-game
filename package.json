@@ -17,7 +17,6 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "preversion": "npm install --ignore-scripts",
-    "postversion": "npm run changelog && git add CHANGELOG.md && git commit --amend --no-edit",
     "version:patch": "npm version patch -m 'chore: bump version to %s'",
     "version:minor": "npm version minor -m 'chore: bump version to %s'",
     "version:major": "npm version major -m 'chore: bump version to %s'",
