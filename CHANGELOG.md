@@ -1,14 +1,20 @@
-## 1.5.0 (2025-11-14)
+## <small>1.5.1 (2025-11-14)</small>
 
 * chore: bump version to 1.4.1 ([bbc91bc](https://github.com/ndsrf/wine-tasting-game/commit/bbc91bc))
 * chore: bump version to 1.4.2 ([d07e115](https://github.com/ndsrf/wine-tasting-game/commit/d07e115))
 * chore: bump version to 1.4.3 ([e38b917](https://github.com/ndsrf/wine-tasting-game/commit/e38b917))
 * chore: bump version to 1.4.4 ([31cd6a7](https://github.com/ndsrf/wine-tasting-game/commit/31cd6a7))
-* chore: bump version to 1.5.0 ([e0bd74e](https://github.com/ndsrf/wine-tasting-game/commit/e0bd74e))
+* chore: bump version to 1.5.0 ([d0a85b0](https://github.com/ndsrf/wine-tasting-game/commit/d0a85b0))
+* chore: bump version to 1.5.1 ([7820cab](https://github.com/ndsrf/wine-tasting-game/commit/7820cab))
 * chore: update changelog and version files for v1.4.0 ([0bfb71d](https://github.com/ndsrf/wine-tasting-game/commit/0bfb71d))
 * chore: update changelog and version files for v1.4.1 ([c6915c4](https://github.com/ndsrf/wine-tasting-game/commit/c6915c4))
 * chore: update changelog and version files for v1.4.2 ([b8136c4](https://github.com/ndsrf/wine-tasting-game/commit/b8136c4))
 * chore: update changelog and version files for v1.4.3 ([fecce2d](https://github.com/ndsrf/wine-tasting-game/commit/fecce2d))
+* chore: update changelog and version files for v1.5.0 ([37a4002](https://github.com/ndsrf/wine-tasting-game/commit/37a4002))
+* docs: update CHANGELOG.md for v1.4.3 release ([e30cc35](https://github.com/ndsrf/wine-tasting-game/commit/e30cc35))
+* docs: update version history to v1.4.0 ([b845d5e](https://github.com/ndsrf/wine-tasting-game/commit/b845d5e))
+* docs(config): add complete LLM provider configuration to deployment docs ([300537e](https://github.com/ndsrf/wine-tasting-game/commit/300537e))
+* docs(versioning): add quick start guide and TL;DR summary ([e322e74](https://github.com/ndsrf/wine-tasting-game/commit/e322e74))
 * Add multiple llm providers (#16) ([ae71b29](https://github.com/ndsrf/wine-tasting-game/commit/ae71b29)), closes [#16](https://github.com/ndsrf/wine-tasting-game/issues/16)
 * Initial plan ([f458cb6](https://github.com/ndsrf/wine-tasting-game/commit/f458cb6))
 * Initial plan ([af2346d](https://github.com/ndsrf/wine-tasting-game/commit/af2346d))
@@ -22,9 +28,6 @@
 * feat(ci): improve versioning system to support pull request workflows ([3d033c4](https://github.com/ndsrf/wine-tasting-game/commit/3d033c4))
 * feat(ui): add home page link to director dashboard ([1ac2ad1](https://github.com/ndsrf/wine-tasting-game/commit/1ac2ad1))
 * feat(ui): add wine bottle favicon to application ([03285f7](https://github.com/ndsrf/wine-tasting-game/commit/03285f7))
-* docs: update CHANGELOG.md for v1.4.3 release ([e30cc35](https://github.com/ndsrf/wine-tasting-game/commit/e30cc35))
-* docs: update version history to v1.4.0 ([b845d5e](https://github.com/ndsrf/wine-tasting-game/commit/b845d5e))
-* docs(versioning): add quick start guide and TL;DR summary ([e322e74](https://github.com/ndsrf/wine-tasting-game/commit/e322e74))
 
 
 
