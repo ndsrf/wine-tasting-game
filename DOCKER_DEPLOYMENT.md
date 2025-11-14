@@ -169,8 +169,24 @@ NEXTAUTH_SECRET="your-generated-secret-here"
 JWT_SECRET="your-generated-jwt-secret-here"
 NEXTAUTH_URL="http://YOUR_SERVER_IP:3000"
 
-# OpenAI
-OPENAI_API_KEY="sk-your-real-api-key"
+# LLM Provider Configuration
+# Choose LLM provider: "openai" (default), "gemini", or "anthropic"
+LLM_PROVIDER="openai"
+
+# OpenAI Configuration
+# Get API key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY="sk-your-openai-api-key-here"
+OPENAI_MODEL="gpt-4"
+
+# Google Gemini Configuration (only needed if LLM_PROVIDER="gemini")
+# Get API key from: https://makersuite.google.com/app/apikey
+GEMINI_API_KEY="your-gemini-api-key-here"
+GEMINI_MODEL="gemini-1.5-pro"
+
+# Anthropic Configuration (only needed if LLM_PROVIDER="anthropic")
+# Get API key from: https://console.anthropic.com/settings/keys
+ANTHROPIC_API_KEY="sk-ant-your-anthropic-api-key-here"
+ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
 
 # Redis
 REDIS_URL="redis://:CHANGE_ME_REDIS_PASSWORD@redis:6379"

@@ -119,7 +119,23 @@ POSTGRES_PASSWORD="STRONG_PASSWORD"
 POSTGRES_DB="wine_tasting_db"
 NEXTAUTH_SECRET="your-generated-secret"
 JWT_SECRET="your-generated-jwt-secret"
-OPENAI_API_KEY="sk-your-api-key"
+
+# LLM Provider Configuration
+# Choose LLM provider: "openai" (default), "gemini", or "anthropic"
+LLM_PROVIDER="openai"
+
+# OpenAI Configuration
+OPENAI_API_KEY="sk-your-openai-api-key-here"
+OPENAI_MODEL="gpt-4"
+
+# Google Gemini Configuration (only needed if LLM_PROVIDER="gemini")
+GEMINI_API_KEY="your-gemini-api-key-here"
+GEMINI_MODEL="gemini-1.5-pro"
+
+# Anthropic Configuration (only needed if LLM_PROVIDER="anthropic")
+ANTHROPIC_API_KEY="sk-ant-your-anthropic-api-key-here"
+ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+
 REDIS_URL="redis://:REDIS_PASSWORD@redis:6379"
 REDIS_PASSWORD="REDIS_PASSWORD"
 NODE_ENV="production"

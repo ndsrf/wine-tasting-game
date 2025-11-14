@@ -28,8 +28,20 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
 
+      # LLM Provider Configuration
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+
       # OpenAI
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4}
+
+      # Google Gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-pro}
+
+      # Anthropic Claude
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
 
       # Redis
       REDIS_URL: ${REDIS_URL}
