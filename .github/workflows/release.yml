@@ -51,45 +51,9 @@ jobs:
             echo "changelog=Release ${{ steps.version.outputs.tag }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update VERSION.md
+      - name: Copy CHANGELOG to public directory
         run: |
-          # Create updated VERSION.md with proper date substitution
-          RELEASE_DATE=$(date +"%B %d, %Y")
-          cat > VERSION.md << EOF
-          # Wine Tasting Game - Version History
-
-          ## Version ${{ steps.version.outputs.version }}
-          **Released:** ${RELEASE_DATE}
-          **Status:** Stable
-
-          ### What's New
-          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
-
-          ### Technical Stack
-          - Next.js 14 with TypeScript
-          - Tailwind CSS for styling
-          - Prisma with PostgreSQL
-          - Socket.io for real-time communication
-          - OpenAI API for wine characteristics
-          - Redis for caching
-
-          ### Features
-          - 🍷 Multiplayer wine tasting game
-          - 👥 Director-Player model
-          - 🎯 Three difficulty levels: Novice, Intermediate, Sommelier
-          - 🔄 Real-time multiplayer with Socket.io
-          - 🤖 AI-powered wine characteristics
-          - 📱 Progressive Web App (PWA) support
-          - 🌍 Multi-language support (English, Spanish, French, German)
-
-          ### Deployment
-          - Docker support with multi-platform builds (amd64, arm64)
-          - Custom server.js for Socket.io integration
-          - Environment-based configuration
-          EOF
-
           # Copy to public directory
-          cp VERSION.md public/VERSION.md
           cp CHANGELOG.md public/CHANGELOG.md
 
       - name: Commit updated files
@@ -107,7 +71,7 @@ jobs:
           git pull origin main
 
           # Add and commit updated files
-          git add CHANGELOG.md VERSION.md public/VERSION.md public/CHANGELOG.md
+          git add CHANGELOG.md public/CHANGELOG.md
 
           # Only commit if there are changes
           if ! git diff --staged --quiet; then
