@@ -15,20 +15,40 @@ export function VersionModal({ isOpen, onClose }: VersionModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      // Fetch VERSION.md content
-      fetch('/VERSION.md')
-        .then(res => res.text())
+      // Fetch CHANGELOG.md from configured URL (default: GitHub repository)
+      // This ensures we always get the latest changelog, even in Docker containers
+      // where the file might not be included in the build
+      const changelogUrl = process.env.NEXT_PUBLIC_CHANGELOG_URL || 'https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/CHANGELOG.md'
+      
+      fetch(changelogUrl)
+        .then(res => {
+          if (!res.ok) {
+            // Fallback to local file if remote fetch fails
+            return fetch('/CHANGELOG.md').then(r => r.text())
+          }
+          return res.text()
+        })
         .then(text => {
           setContent(text)
           setLoading(false)
         })
         .catch(err => {
-          console.error('Failed to load version info:', err)
-          setContent('Failed to load version information.')
+          console.error('Failed to load changelog:', err)
+          setContent('Failed to load changelog information.')
           setLoading(false)
         })
     }
   }, [isOpen])
+
+  // Convert markdown links to HTML anchors
+  const renderMarkdownContent = (markdown: string) => {
+    // Convert markdown links [text](url) to HTML anchors
+    const withLinks = markdown.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-wine-600 hover:text-wine-800 underline">$1</a>'
+    )
+    return withLinks
+  }
 
   if (!isOpen) return null
 
@@ -37,7 +57,7 @@ export function VersionModal({ isOpen, onClose }: VersionModalProps) {
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Version Information</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Changelog</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -55,9 +75,10 @@ export function VersionModal({ isOpen, onClose }: VersionModalProps) {
             </div>
           ) : (
             <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
-                {content}
-              </pre>
+              <pre 
+                className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderMarkdownContent(content) }}
+              />
             </div>
           )}
         </div>

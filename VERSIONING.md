@@ -397,7 +397,6 @@ The version bump scripts use conventional commits to suggest the appropriate ver
    - Tag pushed to GitHub
    - GitHub Actions triggered
    - **CHANGELOG.md generated** from conventional commits
-   - **VERSION.md updated** with release info
    - GitHub Release created with release notes
    - Docker images built and published
    - Updated documentation committed back to main
@@ -409,7 +408,6 @@ Each release includes:
 - **GitHub Release** with auto-generated notes
 - **CHANGELOG.md** with detailed changes
 - **Docker Images** tagged with version
-- **Updated VERSION.md** files
 - **Git Tag** for version reference
 
 ## Automated Systems
@@ -422,7 +420,6 @@ Each release includes:
 
 **Actions**:
 - Generates/updates CHANGELOG.md
-- Updates VERSION.md files
 - Creates GitHub Release with notes
 - Links to Docker images
 - Commits updated docs
@@ -497,7 +494,7 @@ curl https://yourdomain.com/api/version
 ### In UI
 
 - **Footer**: Click version number (e.g., `v1.0.0`) in footer
-- **Version Modal**: Shows full version history from VERSION.md
+- **Version Modal**: Shows full changelog from CHANGELOG.md (fetched from GitHub or local fallback)
 
 ### Environment Variables
 
