@@ -15,9 +15,19 @@ export function VersionModal({ isOpen, onClose }: VersionModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      // Fetch CHANGELOG.md content
-      fetch('/CHANGELOG.md')
-        .then(res => res.text())
+      // Fetch CHANGELOG.md from GitHub repository
+      // This ensures we always get the latest changelog, even in Docker containers
+      // where the file might not be included in the build
+      const githubRawUrl = 'https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/CHANGELOG.md'
+      
+      fetch(githubRawUrl)
+        .then(res => {
+          if (!res.ok) {
+            // Fallback to local file if GitHub fetch fails
+            return fetch('/CHANGELOG.md').then(r => r.text())
+          }
+          return res.text()
+        })
         .then(text => {
           setContent(text)
           setLoading(false)
