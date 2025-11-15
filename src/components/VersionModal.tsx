@@ -15,15 +15,15 @@ export function VersionModal({ isOpen, onClose }: VersionModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      // Fetch CHANGELOG.md from GitHub repository
+      // Fetch CHANGELOG.md from configured URL (default: GitHub repository)
       // This ensures we always get the latest changelog, even in Docker containers
       // where the file might not be included in the build
-      const githubRawUrl = 'https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/CHANGELOG.md'
+      const changelogUrl = process.env.NEXT_PUBLIC_CHANGELOG_URL || 'https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/CHANGELOG.md'
       
-      fetch(githubRawUrl)
+      fetch(changelogUrl)
         .then(res => {
           if (!res.ok) {
-            // Fallback to local file if GitHub fetch fails
+            // Fallback to local file if remote fetch fails
             return fetch('/CHANGELOG.md').then(r => r.text())
           }
           return res.text()

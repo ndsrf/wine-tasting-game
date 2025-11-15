@@ -23,7 +23,8 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || `http://localhost:${process.env.PORT || 3000}`,
     NEXT_PUBLIC_APP_VERSION: packageJson.version,
     NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
-    NEXT_PUBLIC_GIT_COMMIT: process.env.GITHUB_SHA || process.env.GIT_COMMIT || 'dev'
+    NEXT_PUBLIC_GIT_COMMIT: process.env.GITHUB_SHA || process.env.GIT_COMMIT || 'dev',
+    NEXT_PUBLIC_CHANGELOG_URL: process.env.NEXT_PUBLIC_CHANGELOG_URL || 'https://raw.githubusercontent.com/ndsrf/wine-tasting-game/main/CHANGELOG.md'
   },
   async headers() {
     return [
