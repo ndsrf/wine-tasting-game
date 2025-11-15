@@ -90,6 +90,7 @@ jobs:
 
           # Copy to public directory
           cp VERSION.md public/VERSION.md
+          cp CHANGELOG.md public/CHANGELOG.md
 
       - name: Commit updated files
         run: |
@@ -106,7 +107,7 @@ jobs:
           git pull origin main
 
           # Add and commit updated files
-          git add CHANGELOG.md VERSION.md public/VERSION.md
+          git add CHANGELOG.md VERSION.md public/VERSION.md public/CHANGELOG.md
 
           # Only commit if there are changes
           if ! git diff --staged --quiet; then
