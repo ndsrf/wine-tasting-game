@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 
 interface Tasting {
   id: string
-  rating: number
+  rating: number | null
   comments: string | null
   location: string | null
   occasion: string | null
@@ -238,10 +238,14 @@ export default function TastingsPage() {
                     )}
 
                     <div className="flex items-center space-x-4 mb-3">
-                      <div className="flex items-center space-x-2">
-                        {renderStars(tasting.rating)}
-                        <span className="text-sm font-semibold text-gray-700">{tasting.rating}/10</span>
-                      </div>
+                      {tasting.rating !== null ? (
+                        <div className="flex items-center space-x-2">
+                          {renderStars(tasting.rating)}
+                          <span className="text-sm font-semibold text-gray-700">{tasting.rating}/10</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500 italic">{t('tastings.notRated')}</span>
+                      )}
                       <span className="text-sm text-gray-500">
                         {new Date(tasting.createdAt).toLocaleDateString()}
                       </span>
@@ -283,13 +287,21 @@ export default function TastingsPage() {
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-900">
-                  {(tastings.reduce((sum, t) => sum + t.rating, 0) / tastings.length).toFixed(1)}
+                  {(() => {
+                    const ratedTastings = tastings.filter(t => t.rating !== null)
+                    if (ratedTastings.length === 0) return '-'
+                    return (ratedTastings.reduce((sum, t) => sum + (t.rating || 0), 0) / ratedTastings.length).toFixed(1)
+                  })()}
                 </p>
                 <p className="text-sm text-gray-600">{t('tastings.averageRating')}</p>
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-900">
-                  {Math.max(...tastings.map(t => t.rating))}
+                  {(() => {
+                    const ratedTastings = tastings.filter(t => t.rating !== null)
+                    if (ratedTastings.length === 0) return '-'
+                    return Math.max(...ratedTastings.map(t => t.rating || 0))
+                  })()}
                 </p>
                 <p className="text-sm text-gray-600">{t('tastings.highestRating')}</p>
               </div>

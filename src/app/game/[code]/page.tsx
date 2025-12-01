@@ -850,7 +850,39 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
   const [explanations, setExplanations] = useState<Record<string, { visual: string; smell: string; taste: string }> | null>(null)
   const [showRateModal, setShowRateModal] = useState(false)
   const [selectedWine, setSelectedWine] = useState<any>(null)
+  const [winesSaved, setWinesSaved] = useState(false)
+  const [ratedWines, setRatedWines] = useState<Set<string>>(new Set())
   const retryCountRef = useRef(0)
+  const saveAttemptedRef = useRef(false)
+
+  // Auto-save wines to history when results are loaded (for authenticated users)
+  useEffect(() => {
+    const saveWinesToHistory = async () => {
+      if (!isAuthenticated || !results || saveAttemptedRef.current) return
+      
+      saveAttemptedRef.current = true
+      
+      try {
+        const response = await fetch(`/api/games/${code}/save-to-history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Wines saved to history:', data)
+          setWinesSaved(true)
+        }
+      } catch (err) {
+        console.error('Failed to save wines to history:', err)
+        // Silently fail - user can still manually save later
+      }
+    }
+
+    saveWinesToHistory()
+  }, [isAuthenticated, results, code])
 
   // Handler for rating wine
   const handleRateWine = (wine: any) => {
@@ -883,7 +915,9 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
         throw new Error('Failed to save rating')
       }
 
-      alert('Wine rating saved successfully!')
+      // Mark wine as rated
+      setRatedWines(prev => new Set(Array.from(prev).concat([selectedWine.id])))
+      alert(t('rateWine.ratingSaved') || 'Wine rating saved successfully!')
     } catch (error) {
       console.error('Error saving rating:', error)
       throw error
@@ -1454,24 +1488,42 @@ function PlayerResults({ player, gameState, code }: { player: Player; gameState:
                       <span className="mr-3">⭐</span>
                       {t('rateWine.rateTheWines')}
                     </h2>
+                    {winesSaved && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-green-800 flex items-center">
+                          <span className="mr-2">✓</span>
+                          {t('rateWine.winesSavedToHistory')}
+                        </p>
+                      </div>
+                    )}
                     <p className="text-gray-600 mb-4">
                       {t('rateWine.description')}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {results.wines.map((wine: any, index: number) => (
+                      {results.wines.map((wine: any) => (
                         <button
                           key={wine.id}
                           onClick={() => handleRateWine(wine)}
-                          className="flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
+                          className={`flex items-center justify-between p-4 rounded-lg transition-colors border ${
+                            ratedWines.has(wine.id)
+                              ? 'bg-green-50 hover:bg-green-100 border-green-200'
+                              : 'bg-purple-50 hover:bg-purple-100 border-purple-200'
+                          }`}
                         >
                           <div className="text-left">
-                            <p className="font-semibold text-purple-900">
+                            <p className={`font-semibold ${ratedWines.has(wine.id) ? 'text-green-900' : 'text-purple-900'}`}>
                               {wine.name} ({wine.year})
                             </p>
-                            <p className="text-sm text-purple-700">{t('rateWine.clickToRate')}</p>
+                            <p className={`text-sm ${ratedWines.has(wine.id) ? 'text-green-700' : 'text-purple-700'}`}>
+                              {ratedWines.has(wine.id) ? t('rateWine.rated') : t('rateWine.clickToRate')}
+                            </p>
                           </div>
-                          <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          <svg className={`w-6 h-6 ${ratedWines.has(wine.id) ? 'text-green-400' : 'text-yellow-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                            {ratedWines.has(wine.id) ? (
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            ) : (
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            )}
                           </svg>
                         </button>
                       ))}
