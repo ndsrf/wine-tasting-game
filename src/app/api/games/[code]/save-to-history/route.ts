@@ -59,34 +59,65 @@ export async function POST(
       })
     }
 
+    // First, ensure all catalog entries exist (batch operation to avoid duplicates)
+    const winesWithoutCatalog = winesToSave.filter(wine => !wine.wineCatalogId)
+    const uniqueWineEntries = new Map<string, { name: string; year: number }>()
+    
+    for (const wine of winesWithoutCatalog) {
+      const key = `${wine.name}|${wine.year}`
+      if (!uniqueWineEntries.has(key)) {
+        uniqueWineEntries.set(key, { name: wine.name, year: wine.year })
+      }
+    }
+
+    // Create catalog entries for unique wines
+    const catalogIdMap = new Map<string, string>()
+    const entries = Array.from(uniqueWineEntries.entries())
+    for (const [key, wineInfo] of entries) {
+      const catalogEntry = await prisma.wineCatalog.upsert({
+        where: {
+          name_year: {
+            name: wineInfo.name,
+            year: wineInfo.year,
+          },
+        },
+        create: {
+          name: wineInfo.name,
+          year: wineInfo.year,
+        },
+        update: {},
+      })
+      catalogIdMap.set(key, catalogEntry.id)
+    }
+
+    // Update wines with catalog references in batch
+    const wineUpdates = winesWithoutCatalog.map(wine => {
+      const key = `${wine.name}|${wine.year}`
+      const catalogId = catalogIdMap.get(key)
+      if (catalogId) {
+        return prisma.wine.update({
+          where: { id: wine.id },
+          data: { wineCatalogId: catalogId },
+        })
+      }
+      return null
+    }).filter(Boolean)
+
+    await Promise.all(wineUpdates)
+
     // Save wines to tasting history (without rating)
     const tastings = await Promise.all(
       winesToSave.map(async (wine) => {
-        // Ensure wine has a catalog entry
-        let catalogId = wine.wineCatalogId
+        // Get catalog ID (either existing or newly created)
+        let catalogId: string | null | undefined = wine.wineCatalogId
+        if (!catalogId) {
+          const key = `${wine.name}|${wine.year}`
+          catalogId = catalogIdMap.get(key) || null
+        }
 
         if (!catalogId) {
-          // Create catalog entry if it doesn't exist
-          const catalogEntry = await prisma.wineCatalog.upsert({
-            where: {
-              name_year: {
-                name: wine.name,
-                year: wine.year,
-              },
-            },
-            create: {
-              name: wine.name,
-              year: wine.year,
-            },
-            update: {},
-          })
-          catalogId = catalogEntry.id
-
-          // Update wine with catalog reference
-          await prisma.wine.update({
-            where: { id: wine.id },
-            data: { wineCatalogId: catalogId },
-          })
+          console.error(`No catalog ID found for wine ${wine.name} (${wine.year})`)
+          return null
         }
 
         return prisma.tastingHistory.create({
@@ -104,10 +135,13 @@ export async function POST(
       })
     )
 
+    // Filter out any null results (wines that failed to save)
+    const savedTastings = tastings.filter((t): t is NonNullable<typeof t> => t !== null)
+
     return NextResponse.json({
       message: 'Wines saved to history successfully',
-      savedCount: tastings.length,
-      tastings: tastings.map(t => t.id),
+      savedCount: savedTastings.length,
+      tastings: savedTastings.map(t => t.id),
     })
   } catch (error) {
     console.error('Save wines to history error:', error)

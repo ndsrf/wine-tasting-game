@@ -288,9 +288,9 @@ export default function TastingsPage() {
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-900">
                   {(() => {
-                    const ratedTastings = tastings.filter(t => t.rating !== null)
+                    const ratedTastings = tastings.filter((t): t is Tasting & { rating: number } => t.rating !== null)
                     if (ratedTastings.length === 0) return '-'
-                    return (ratedTastings.reduce((sum, t) => sum + (t.rating || 0), 0) / ratedTastings.length).toFixed(1)
+                    return (ratedTastings.reduce((sum, t) => sum + t.rating, 0) / ratedTastings.length).toFixed(1)
                   })()}
                 </p>
                 <p className="text-sm text-gray-600">{t('tastings.averageRating')}</p>
@@ -298,9 +298,9 @@ export default function TastingsPage() {
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-900">
                   {(() => {
-                    const ratedTastings = tastings.filter(t => t.rating !== null)
+                    const ratedTastings = tastings.filter((t): t is Tasting & { rating: number } => t.rating !== null)
                     if (ratedTastings.length === 0) return '-'
-                    return Math.max(...ratedTastings.map(t => t.rating || 0))
+                    return Math.max(...ratedTastings.map(t => t.rating))
                   })()}
                 </p>
                 <p className="text-sm text-gray-600">{t('tastings.highestRating')}</p>
