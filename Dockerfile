@@ -3,7 +3,7 @@
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN apk add --update --no-cache libc6-compat openssl
+RUN apk add --update --no-cache --no-scripts libc6-compat openssl
 
 # Copy package files
 COPY package*.json ./
@@ -16,7 +16,7 @@ RUN npm ci --only=production && npm cache clean --force
 # Stage 2: Builder
 FROM node:20-alpine AS builder
 WORKDIR /app
-RUN apk add --update --no-cache libc6-compat openssl
+RUN apk add --update --no-cache --no-scripts libc6-compat openssl
 
 # Copy package files and install all dependencies (including dev)
 COPY package*.json ./
@@ -41,7 +41,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --update --no-cache openssl && \
+RUN apk add --update --no-cache --no-scripts openssl && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
