@@ -7,7 +7,7 @@ const createTastingSchema = z.object({
   wineCatalogId: z.string().optional(),
   wineId: z.string(),
   gameId: z.string().optional(),
-  rating: z.number().min(1).max(10),
+  rating: z.number().min(1).max(10).optional().nullable(),
   comments: z.string().optional(),
   location: z.string().optional(),
   occasion: z.string().optional(),
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         wineCatalogId: catalogId,
         wineId,
         gameId: gameId || null,
-        rating,
+        rating: rating ?? null,
         comments: comments || null,
         location: location || null,
         occasion: occasion || null,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (minRating !== undefined || maxRating !== undefined) {
-      where.rating = {}
+      where.rating = { not: null }
       if (minRating !== undefined) where.rating.gte = minRating
       if (maxRating !== undefined) where.rating.lte = maxRating
     }

@@ -114,7 +114,7 @@ model TastingHistory {
   wineCatalogId String
   gameId        String?
   wineId        String?
-  rating        Int
+  rating        Int?
   comments      String?  @db.Text
   location      String?
   occasion      String?

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { authenticatedFetch } from '@/lib/auth-client'
@@ -10,6 +10,7 @@ import { Wine, Trophy, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import RateWineModal from '@/components/RateWineModal'
 
 interface Answer {
   wineId: string
@@ -52,6 +53,80 @@ export default function ResultsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [explanations, setExplanations] = useState<Record<string, { visual: string; smell: string; taste: string }> | null>(null)
+  const [winesSaved, setWinesSaved] = useState(false)
+  const [showRateModal, setShowRateModal] = useState(false)
+  const [selectedWine, setSelectedWine] = useState<Wine | null>(null)
+  const [ratedWines, setRatedWines] = useState<Set<string>>(new Set())
+  const saveAttemptedRef = useRef(false)
+
+  // Auto-save wines to history when results are loaded
+  useEffect(() => {
+    const saveWinesToHistory = async () => {
+      if (!isAuthenticated || !results || saveAttemptedRef.current) return
+      
+      saveAttemptedRef.current = true
+      
+      try {
+        const response = await authenticatedFetch(`/api/games/${code}/save-to-history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Wines saved to history:', data)
+          setWinesSaved(true)
+        }
+      } catch (err) {
+        console.error('Failed to save wines to history:', err)
+        // Silently fail - user can still manually save later
+      }
+    }
+
+    saveWinesToHistory()
+  }, [isAuthenticated, results, code])
+
+  // Handler for rating wine
+  const handleRateWine = (wine: Wine) => {
+    setSelectedWine(wine)
+    setShowRateModal(true)
+  }
+
+  const handleSubmitRating = async (data: {
+    rating: number
+    location?: string
+    occasion?: string
+    comments?: string
+  }) => {
+    if (!selectedWine) return
+
+    try {
+      const response = await authenticatedFetch('/api/tastings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wineId: selectedWine.id,
+          gameId: undefined, // Director results page doesn't have direct access to gameId
+          ...data,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save rating')
+      }
+
+      // Mark wine as rated
+      setRatedWines(prev => new Set(Array.from(prev).concat([selectedWine.id])))
+      alert(t('rateWine.ratingSaved') || 'Wine rating saved successfully!')
+    } catch (error) {
+      console.error('Error saving rating:', error)
+      throw error
+    }
+  }
 
   useEffect(() => {
     if (authLoading) return
@@ -354,11 +429,75 @@ export default function ResultsPage() {
           </Card>
         )}
 
+        {/* Rate Wines Section */}
+        {results?.wines && results.wines.length > 0 && (
+          <Card className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center">
+              <span className="mr-3">⭐</span>
+              {t('rateWine.rateTheWines')}
+            </h2>
+            {winesSaved && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-green-800 flex items-center">
+                  <span className="mr-2">✓</span>
+                  {t('rateWine.winesSavedToHistory')}
+                </p>
+              </div>
+            )}
+            <p className="text-gray-600 mb-4">
+              {t('rateWine.description')}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {results.wines.map((wine) => (
+                <button
+                  key={wine.id}
+                  onClick={() => handleRateWine(wine)}
+                  className={`flex items-center justify-between p-4 rounded-lg transition-colors border ${
+                    ratedWines.has(wine.id)
+                      ? 'bg-green-50 hover:bg-green-100 border-green-200'
+                      : 'bg-purple-50 hover:bg-purple-100 border-purple-200'
+                  }`}
+                >
+                  <div className="text-left">
+                    <p className={`font-semibold ${ratedWines.has(wine.id) ? 'text-green-900' : 'text-purple-900'}`}>
+                      {wine.name} ({wine.year})
+                    </p>
+                    <p className={`text-sm ${ratedWines.has(wine.id) ? 'text-green-700' : 'text-purple-700'}`}>
+                      {ratedWines.has(wine.id) ? t('rateWine.rated') : t('rateWine.clickToRate')}
+                    </p>
+                  </div>
+                  <svg className={`w-6 h-6 ${ratedWines.has(wine.id) ? 'text-green-400' : 'text-yellow-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                    {ratedWines.has(wine.id) ? (
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    ) : (
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    )}
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <div className="text-center mt-8">
           <Button onClick={() => router.push('/director')}>
             {t('director.backToDashboard')}
           </Button>
         </div>
+
+        {/* Rate Wine Modal */}
+        {showRateModal && selectedWine && (
+          <RateWineModal
+            wineName={selectedWine.name}
+            wineYear={selectedWine.year}
+            wineId={selectedWine.id}
+            onClose={() => {
+              setShowRateModal(false)
+              setSelectedWine(null)
+            }}
+            onSubmit={handleSubmitRating}
+          />
+        )}
       </div>
     </div>
   )

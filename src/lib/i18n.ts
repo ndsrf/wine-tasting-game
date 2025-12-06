@@ -492,6 +492,7 @@ const resources = {
         averageRating: 'Average Rating',
         highestRating: 'Highest Rating',
         stars: 'stars',
+        notRated: 'Not rated yet',
       },
       rateWine: {
         title: 'Rate This Wine',
@@ -512,6 +513,9 @@ const resources = {
         rateTheWines: 'Rate the Wines',
         pleaseSelectRating: 'Please select a rating',
         failedToSave: 'Failed to save rating. Please try again.',
+        winesSavedToHistory: 'Wines have been saved to your tasting history',
+        rated: 'Rated ✓',
+        ratingSaved: 'Wine rating saved successfully!',
       }
     }
   },
@@ -1007,6 +1011,7 @@ const resources = {
         averageRating: 'Puntuación Promedio',
         highestRating: 'Puntuación Más Alta',
         stars: 'estrellas',
+        notRated: 'Sin calificar',
       },
       rateWine: {
         title: 'Calificar Este Vino',
@@ -1027,6 +1032,9 @@ const resources = {
         rateTheWines: 'Calificar los Vinos',
         pleaseSelectRating: 'Por favor selecciona una calificación',
         failedToSave: 'Error al guardar la calificación. Por favor intenta de nuevo.',
+        winesSavedToHistory: 'Los vinos han sido guardados en tu historial de catas',
+        rated: 'Calificado ✓',
+        ratingSaved: '¡Calificación del vino guardada correctamente!',
       }
     }
   },
@@ -1518,6 +1526,7 @@ const resources = {
         averageRating: 'Note Moyenne',
         highestRating: 'Note la Plus Élevée',
         stars: 'étoiles',
+        notRated: 'Pas encore noté',
       },
       rateWine: {
         title: 'Noter Ce Vin',
@@ -1538,6 +1547,9 @@ const resources = {
         rateTheWines: 'Noter les Vins',
         pleaseSelectRating: 'Veuillez sélectionner une note',
         failedToSave: 'Échec de l\'enregistrement de la note. Veuillez réessayer.',
+        winesSavedToHistory: 'Les vins ont été enregistrés dans votre historique de dégustations',
+        rated: 'Noté ✓',
+        ratingSaved: 'Note du vin enregistrée avec succès!',
       }
     }
   }
