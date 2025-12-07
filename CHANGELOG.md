@@ -1,3 +1,24 @@
+## 1.6.0 (2025-12-07)
+
+* chore: bump version to 1.5.4 ([0591d01](https://github.com/ndsrf/wine-tasting-game/commit/0591d01))
+* chore: bump version to 1.6.0 ([4513dd5](https://github.com/ndsrf/wine-tasting-game/commit/4513dd5))
+* chore: remove unused VERSION.md files and update documentation ([8b43c64](https://github.com/ndsrf/wine-tasting-game/commit/8b43c64))
+* chore: update changelog and version files for v1.5.3 ([dc41458](https://github.com/ndsrf/wine-tasting-game/commit/dc41458))
+* fix: address code review feedback ([63e7264](https://github.com/ndsrf/wine-tasting-game/commit/63e7264))
+* fix(ci): ensure CHANGELOG.md is copied to public directory during release ([806efe7](https://github.com/ndsrf/wine-tasting-game/commit/806efe7))
+* fix(docker): add --no-scripts flag to apk commands for ARM64 compatibility ([946618e](https://github.com/ndsrf/wine-tasting-game/commit/946618e))
+* fix(docker): resolve ARM64 build failure and ENV format warnings ([edce950](https://github.com/ndsrf/wine-tasting-game/commit/edce950))
+* fix(ui): fetch changelog from GitHub to ensure Docker containers show latest version ([872b359](https://github.com/ndsrf/wine-tasting-game/commit/872b359))
+* fix(ui): update version modal to display changelog instead of version info ([a79ad34](https://github.com/ndsrf/wine-tasting-game/commit/a79ad34))
+* Initial plan ([a31e70f](https://github.com/ndsrf/wine-tasting-game/commit/a31e70f))
+* Initial plan ([cb3c5b5](https://github.com/ndsrf/wine-tasting-game/commit/cb3c5b5))
+* Initial plan ([ee52795](https://github.com/ndsrf/wine-tasting-game/commit/ee52795))
+* Initial plan ([bdac9f5](https://github.com/ndsrf/wine-tasting-game/commit/bdac9f5))
+* feat: auto-save wines to history when game finishes ([8b83f18](https://github.com/ndsrf/wine-tasting-game/commit/8b83f18))
+* feat(config): add configurable changelog URL for flexible deployment ([f49aca5](https://github.com/ndsrf/wine-tasting-game/commit/f49aca5))
+
+
+
 ## <small>1.5.3 (2025-11-14)</small>
 
 * chore: add Gemini API model testing script ([6a67ca0](https://github.com/ndsrf/wine-tasting-game/commit/6a67ca0))
