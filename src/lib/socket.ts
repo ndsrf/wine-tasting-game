@@ -4,6 +4,49 @@ import { prisma } from './prisma'
 import redis from './redis'
 import { GameState, CharacteristicType } from '@/types'
 
+// In-memory cache for game states to reduce Redis calls
+interface CacheEntry {
+  state: any
+  timestamp: number
+}
+
+const gameStateCache = new Map<string, CacheEntry>()
+const CACHE_TTL = 5000 // 5 seconds - short enough to stay fresh, long enough to reduce Redis calls
+
+function getCachedState(key: string): any | null {
+  const entry = gameStateCache.get(key)
+  if (!entry) return null
+
+  const now = Date.now()
+  if (now - entry.timestamp > CACHE_TTL) {
+    gameStateCache.delete(key)
+    return null
+  }
+
+  return entry.state
+}
+
+function setCachedState(key: string, state: any): void {
+  gameStateCache.set(key, {
+    state,
+    timestamp: Date.now()
+  })
+}
+
+function invalidateCachedState(key: string): void {
+  gameStateCache.delete(key)
+}
+
+// Periodic cleanup of expired cache entries (every 30 seconds)
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, entry] of gameStateCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) {
+      gameStateCache.delete(key)
+    }
+  }
+}, 30000)
+
 export class GameSocket {
   private io: SocketIOServer
 
@@ -151,12 +194,16 @@ export class GameSocket {
             data: { status: 'IN_PROGRESS' },
           })
 
-          await redis.set(`game:${data.code}:state`, JSON.stringify({
+          const stateKey = `game:${data.code}:state`
+          await redis.set(stateKey, JSON.stringify({
             currentWine: 1,
             currentPhase: 'VISUAL',
             isGameStarted: true,
             isGameFinished: false,
           }))
+
+          // Invalidate cache after state change
+          invalidateCachedState(stateKey)
 
           const gameState = await this.getGameState(data.code)
           this.io.to(data.code).emit('game-started', gameState)
@@ -189,6 +236,9 @@ export class GameSocket {
             const state = JSON.parse(currentState)
             state.currentPhase = data.phase
             await redis.set(stateKey, JSON.stringify(state))
+
+            // Invalidate cache after state change
+            invalidateCachedState(stateKey)
           }
 
           // Get updated game state after phase change
@@ -243,6 +293,9 @@ export class GameSocket {
             }
 
             await redis.set(stateKey, JSON.stringify(state))
+
+            // Invalidate cache after state change
+            invalidateCachedState(stateKey)
           }
 
           const gameState = await this.getGameState(data.code)
@@ -292,6 +345,9 @@ export class GameSocket {
             const state = JSON.parse(currentState)
             state.isGameFinished = true
             await redis.set(stateKey, JSON.stringify(state))
+
+            // Invalidate cache after state change
+            invalidateCachedState(stateKey)
           }
 
           const gameState = await this.getGameState(data.code)
@@ -415,8 +471,18 @@ export class GameSocket {
     })
   }
 
-  private async getGameState(code: string): Promise<GameState | null> {
+  private async getGameState(code: string, skipCache = false): Promise<GameState | null> {
     try {
+      const stateKey = `game:${code}:state`
+
+      // Check cache first (unless explicitly skipped)
+      if (!skipCache) {
+        const cachedState = getCachedState(stateKey)
+        if (cachedState) {
+          return cachedState
+        }
+      }
+
       const game = await prisma.game.findUnique({
         where: { code },
         include: {
@@ -436,7 +502,7 @@ export class GameSocket {
 
       if (!game) return null
 
-      const stateKey = `game:${code}:state`
+      // Only read from Redis if we don't have a cached value
       const currentState = await redis.get(stateKey)
 
       const state = currentState ? JSON.parse(currentState) : {
@@ -446,7 +512,7 @@ export class GameSocket {
         isGameFinished: game.status === 'FINISHED',
       }
 
-      return {
+      const gameState = {
         game: {
           ...game,
           director: game.director ? {
@@ -464,6 +530,11 @@ export class GameSocket {
         isGameFinished: state.isGameFinished || game.status === 'FINISHED',
         players: game.players,
       }
+
+      // Cache the result
+      setCachedState(stateKey, gameState)
+
+      return gameState
     } catch (error) {
       console.error('Get game state error:', error)
       return null

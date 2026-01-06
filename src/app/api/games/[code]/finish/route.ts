@@ -51,6 +51,9 @@ export async function POST(
       await redis.set(stateKey, JSON.stringify(state))
     }
 
+    // Note: Cache invalidation is handled by Socket.io server
+    // The finish-game socket event will invalidate the cache
+
     console.log(`Game ${code} finished successfully`)
 
     return NextResponse.json({
