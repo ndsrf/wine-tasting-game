@@ -13,9 +13,9 @@ The application was making excessive Redis calls (>1 per second) even when idle,
 ## Solutions Implemented
 
 ### 1. Redis Client Singleton Pattern (`src/lib/redis.ts`)
-- Implemented singleton pattern to ensure only one Redis client instance
-- Added connection promise tracking to prevent simultaneous connection attempts
-- Lazy connection strategy to reduce unnecessary connections
+- Module-level singleton ensures only one Redis client instance across all imports
+- Node.js module caching provides natural singleton behavior
+- Single connection on first import with error handling
 
 ### 2. Improved Connection Configuration
 - **Reconnection strategy**: Exponential backoff (500ms, 1s, 2s, up to 3s max)
