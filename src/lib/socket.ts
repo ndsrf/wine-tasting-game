@@ -40,11 +40,11 @@ function invalidateCachedState(key: string): void {
 // Periodic cleanup of expired cache entries (every 30 seconds)
 setInterval(() => {
   const now = Date.now()
-  for (const [key, entry] of gameStateCache.entries()) {
+  gameStateCache.forEach((entry, key) => {
     if (now - entry.timestamp > CACHE_TTL) {
       gameStateCache.delete(key)
     }
-  }
+  })
 }, 30000)
 
 export class GameSocket {
